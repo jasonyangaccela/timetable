@@ -268,13 +268,13 @@ function alarmTick(){
 
 function getGithubCfg(){ try{return JSON.parse(localStorage.getItem(GITHUB_CFG_KEY)||'{}')}catch{return{}} }
 function setGithubCfg(cfg){ localStorage.setItem(GITHUB_CFG_KEY,JSON.stringify(cfg)); }
-function readGithubCfg(){
+function readGithubCfg(force=false){
   const old=getGithubCfg();
-  if(old.owner&&old.repo&&old.branch&&old.token) return old;
+  if(!force && old.owner&&old.repo&&old.branch&&old.token) return old;
   const owner=prompt('GitHub Owner（用户名）', old.owner||'jasonyangaccela'); if(owner===null) return null;
   const repo=prompt('GitHub Repo（仓库名）', old.repo||'timetable'); if(repo===null) return null;
   const branch=prompt('Branch（分支）', old.branch||'main'); if(branch===null) return null;
-  const token=prompt('GitHub PAT（仅首次输入，后续自动保存）', old.token||''); if(!token) return null;
+  const token=prompt('GitHub PAT（401时请重新粘贴）', ''); if(!token) return null;
   const cfg={owner:owner.trim(),repo:repo.trim(),branch:branch.trim(),token:token.trim()}; setGithubCfg(cfg); return cfg;
 }
 async function githubPutFile(cfg,path,content,message){
@@ -283,7 +283,7 @@ async function githubPutFile(cfg,path,content,message){
   if(g.ok){ const j=await g.json(); sha=j.sha; }
   const body={message,content:btoa(unescape(encodeURIComponent(content))),branch:cfg.branch}; if(sha) body.sha=sha;
   const r=await fetch(api,{method:'PUT',headers:{Authorization:`Bearer ${cfg.token}`,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(!r.ok){ const t=await r.text(); throw new Error(t.slice(0,200)); }
+  if(!r.ok){ const t=await r.text(); if(r.status===401||r.status===403) throw new Error('AUTH_401'); throw new Error(t.slice(0,200)); }
 }
 
 $('openEditorBtn').addEventListener('click',()=>{ clearForm(); openEditor(); });
@@ -377,18 +377,23 @@ $('restoreGithubBtn').addEventListener('click',async()=>{
 });
 
 $('forceRefreshBtn').addEventListener('click',async()=>{
-  const cfg=readGithubCfg(); if(!cfg) return;
+  let cfg=readGithubCfg(); if(!cfg) return;
   const now=new Date();
   const stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
-  try{
+  const run=async()=>{
     const payload=JSON.stringify(list,null,2);
     await githubPutFile(cfg,`backups/${currentRole}-latest.json`,payload,`sync latest ${currentRole}: ${stamp}`);
     await githubPutFile(cfg,`data-${currentRole}.json`,payload,`sync data ${currentRole}: ${stamp}`);
     const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(currentRole)}-latest.json?v=${Date.now()}`;
     const r=await fetch(url,{cache:'no-store'});
     if(r.ok){ const d=await r.json(); if(Array.isArray(d)){ list=d; persist(); render(); } }
-    alert(`同步成功：${currentRole}`);
-  }catch(e){
+  };
+  try{ await run(); alert(`同步成功：${currentRole}`); }
+  catch(e){
+    if((e.message||'').includes('AUTH_401')){
+      cfg=readGithubCfg(true); if(!cfg) return;
+      try{ await run(); alert(`同步成功：${currentRole}`); return; }catch(err){ alert('同步失败：鉴权无效，请检查PAT权限(repo)'); return; }
+    }
     alert('同步失败：'+(e.message||e));
   }
 });

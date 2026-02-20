@@ -205,6 +205,7 @@ function renderRoles(){
 function switchRole(role){
   currentRole=role; localStorage.setItem(ROLE_ACTIVE_KEY, role);
   list=loadRole(role); renderRoles(); render();
+  pullLatestForRole(true);
 }
 
 function openEditor(){ $('editorModal').classList.add('show'); }
@@ -278,6 +279,30 @@ function readGithubCfg(force=false){
   const branch=prompt('Branch（分支）', old.branch||'main'); if(branch===null) return null;
   const token=prompt('GitHub PAT（401时请重新粘贴）', ''); if(!token) return null;
   const cfg={owner:owner.trim(),repo:repo.trim(),branch:branch.trim(),token:token.trim()}; setGithubCfg(cfg); return cfg;
+}
+function getPublicRepoCfg(){
+  const old=getGithubCfg();
+  return {
+    owner:(old.owner||'jasonyangaccela').trim(),
+    repo:(old.repo||'timetable').trim(),
+    branch:(old.branch||'main').trim()
+  };
+}
+async function pullLatestForRole(silent=true){
+  const cfg=getPublicRepoCfg();
+  const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(currentRole)}-latest.json?v=${Date.now()}`;
+  try{
+    const r=await fetch(url,{cache:'no-store'});
+    if(!r.ok) return;
+    const d=await r.json();
+    if(!Array.isArray(d)) return;
+    if(JSON.stringify(d)!==JSON.stringify(list)){
+      list=d; persist(); render();
+      if(!silent) alert(`已从云端同步：${currentRole}`);
+    }else if(!silent){
+      alert(`已是最新：${currentRole}`);
+    }
+  }catch(e){ if(!silent) alert('拉取失败：'+(e.message||e)); }
 }
 async function githubPutFile(cfg,path,content,message){
   const api=`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}`;
@@ -412,9 +437,10 @@ $('forceRefreshBtn').addEventListener('click',async()=>{
   renderRoles();
   syncViewMode();
   render();
+  pullLatestForRole(true);
   setInterval(alarmTick,30000);
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) alarmTick(); });
-  window.addEventListener('focus', alarmTick);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ alarmTick(); pullLatestForRole(true); } });
+  window.addEventListener('focus', ()=>{ alarmTick(); pullLatestForRole(true); });
   alarmTick();
   if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 })();

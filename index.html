@@ -114,7 +114,7 @@
       <div class="row"><div><label>开始时间</label><input id="start" type="time" required /></div><div><label>结束时间</label><input id="end" type="time" required /></div></div>
       <label>地点</label><input id="location" placeholder="例如：A-302 / Zoom" />
       <label>备注</label><textarea id="note" placeholder="可选"></textarea>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;"><input id="alarmOn" type="checkbox" checked style="width:auto;"> 开启闹铃（课前5分钟）</label>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;"><input id="alarmOn" type="checkbox" style="width:auto;"> 开启闹铃（课前5分钟）</label>
       <div class="btn-row"><button class="btn-primary" id="saveBtn" type="submit">保存</button><button class="btn-ghost" type="button" id="resetBtn">清空</button></div>
     </form>
   </div>
@@ -153,6 +153,20 @@ function migrateToJackson(){
   if(Array.isArray(legacy)&&legacy.length){ localStorage.setItem(roleStorageKey('Jackson'), JSON.stringify(legacy)); return; }
   for(const r of roles){ const d=loadRole(r); if(d.length){ localStorage.setItem(roleStorageKey('Jackson'), JSON.stringify(d)); return; } }
 }
+function closeAllExistingAlarms(){
+  const roles=getRoles();
+  for(const r of roles){
+    const d=loadRole(r);
+    if(!Array.isArray(d)||!d.length) continue;
+    let changed=false;
+    const next=d.map(it=>{
+      if(it.alarmOn===false) return it;
+      changed=true;
+      return {...it, alarmOn:false};
+    });
+    if(changed) localStorage.setItem(roleStorageKey(r), JSON.stringify(next));
+  }
+}
 
 function renderRoles(){
   const roles=getRoles();
@@ -166,7 +180,7 @@ function switchRole(role){
 
 function openEditor(){ $('editorModal').classList.add('show'); }
 function closeEditor(){ $('editorModal').classList.remove('show'); }
-function clearForm(){ $('entryId').value=''; $('entryForm').reset(); $('saveBtn').textContent='保存'; $('day').value='周一'; $('type').value='课程'; $('alarmOn').checked=true; }
+function clearForm(){ $('entryId').value=''; $('entryForm').reset(); $('saveBtn').textContent='保存'; $('day').value='周一'; $('type').value='课程'; $('alarmOn').checked=false; }
 function fillForm(it){ ['entryId','title','day','type','start','end','location','note'].forEach(k=>$(k).value=it[k]||''); $('alarmOn').checked=it.alarmOn!==false; $('saveBtn').textContent='保存修改'; openEditor(); }
 
 function render(){
@@ -310,6 +324,7 @@ $('forceRefreshBtn').addEventListener('click',async()=>{ try{ if('serviceWorker'
 
 (async function init(){
   migrateToJackson();
+  closeAllExistingAlarms();
   const roles=getRoles();
   const saved=localStorage.getItem(ROLE_ACTIVE_KEY);
   currentRole=(saved&&roles.includes(saved))?saved:'Jackson';

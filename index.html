@@ -151,6 +151,7 @@ let list=[];
 let viewMode='card';
 
 function roleStorageKey(role){ return `${STORAGE_KEY}__${role}`; }
+function roleCloudKey(role){ return String(role).trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-_\u4e00-\u9fa5]/g,''); }
 function getRoles(){ try{ const r=JSON.parse(localStorage.getItem(ROLE_LIST_KEY)||'[]'); return Array.isArray(r)?r:[]; }catch{return[]} }
 function setRoles(roles){ localStorage.setItem(ROLE_LIST_KEY, JSON.stringify([...new Set(roles)])); }
 function loadRole(role){ try{return JSON.parse(localStorage.getItem(roleStorageKey(role))||'[]')}catch{return[]} }
@@ -290,9 +291,10 @@ function getPublicRepoCfg(){
 }
 async function pullLatestForRole(silent=true){
   const cfg=getPublicRepoCfg();
+  const rk=roleCloudKey(currentRole);
   const roleUrls=[
-    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(currentRole)}-latest.json?v=${Date.now()}`,
-    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/data-${encodeURIComponent(currentRole)}.json?v=${Date.now()}`
+    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(rk)}-latest.json?v=${Date.now()}`,
+    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/data-${encodeURIComponent(rk)}.json?v=${Date.now()}`
   ];
   try{
     let d=null;
@@ -406,13 +408,15 @@ $('backupGithubBtn').addEventListener('click',async()=>{
   const cfg=readGithubCfg(); if(!cfg) return;
   const now=new Date(); const stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
   const payload=JSON.stringify(list,null,2);
-  try{ await githubPutFile(cfg,`backups/${currentRole}-timetable-${stamp}.json`,payload,`backup ${currentRole}: ${stamp}`); await githubPutFile(cfg,`backups/${currentRole}-latest.json`,payload,`backup latest ${currentRole}: ${stamp}`); await githubPutFile(cfg,`data-${currentRole}.json`,payload,`publish ${currentRole}: ${stamp}`); alert(`备份成功：${currentRole}`); }
+  const rk=roleCloudKey(currentRole);
+  try{ await githubPutFile(cfg,`backups/${rk}-timetable-${stamp}.json`,payload,`backup ${currentRole}: ${stamp}`); await githubPutFile(cfg,`backups/${rk}-latest.json`,payload,`backup latest ${currentRole}: ${stamp}`); await githubPutFile(cfg,`data-${rk}.json`,payload,`publish ${currentRole}: ${stamp}`); alert(`备份成功：${currentRole}`); }
   catch(e){ alert('备份失败：'+(e.message||e)); }
 });
 
 $('restoreGithubBtn').addEventListener('click',async()=>{
   const cfg=readGithubCfg(); if(!cfg) return;
-  const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(currentRole)}-latest.json?v=${Date.now()}`;
+  const rk=roleCloudKey(currentRole);
+  const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(rk)}-latest.json?v=${Date.now()}`;
   try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error('未找到该角色备份'); const d=await r.json(); if(!Array.isArray(d)) throw new Error('备份格式不正确'); if(!confirm(`将覆盖 ${currentRole} 本地数据，共 ${d.length} 条，确定继续吗？`)) return; list=d; persist(); render(); alert('恢复成功'); }
   catch(e){ alert('恢复失败：'+(e.message||e)); }
 });
@@ -426,8 +430,9 @@ $('forceRefreshBtn').addEventListener('click',async()=>{
     for(const role of roles){
       const roleData=loadRole(role);
       const payload=JSON.stringify(roleData,null,2);
-      await githubPutFile(cfg,`backups/${role}-latest.json`,payload,`sync latest ${role}: ${stamp}`);
-      await githubPutFile(cfg,`data-${role}.json`,payload,`sync data ${role}: ${stamp}`);
+      const rk=roleCloudKey(role);
+      await githubPutFile(cfg,`backups/${rk}-latest.json`,payload,`sync latest ${role}: ${stamp}`);
+      await githubPutFile(cfg,`data-${rk}.json`,payload,`sync data ${role}: ${stamp}`);
     }
     // 额外同步一份通用 data.json 给 Jackson 兼容
     const jacksonData=loadRole('Jackson');

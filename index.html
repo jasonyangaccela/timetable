@@ -257,8 +257,9 @@ function alarmTick(){
     const start=getNextOccurrence(item, now); if(!start) continue;
     const remindAt=start.getTime()-5*60000;
     const key=`${currentRole}_${item.id}_${start.toISOString().slice(0,10)}_${item.start}`;
-    if(now.getTime()>=remindAt && now.getTime()<start.getTime() && !fired[key]){
-      const msg=`[${currentRole}] ${item.title} ${item.day} ${item.start} 即将开始（5分钟后）`;
+    // 容错窗口：即使页面刚被唤醒，也允许在开课后10分钟内补发提醒
+    if(now.getTime()>=remindAt && now.getTime()<=start.getTime()+10*60000 && !fired[key]){
+      const msg=`[${currentRole}] ${item.title} ${item.day} ${item.start} 即将开始/已开始，请留意`;
       if('Notification' in window && Notification.permission==='granted') new Notification('课程提醒', { body: msg });
       else alert(`🔔 ${msg}`);
       fired[key]=Date.now(); changed=true;
@@ -412,6 +413,8 @@ $('forceRefreshBtn').addEventListener('click',async()=>{
   syncViewMode();
   render();
   setInterval(alarmTick,30000);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) alarmTick(); });
+  window.addEventListener('focus', alarmTick);
   alarmTick();
   if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 })();

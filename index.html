@@ -158,6 +158,7 @@ function persist(){ localStorage.setItem(roleStorageKey(currentRole), JSON.strin
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function esc(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
 function sortList(arr){ return [...arr].sort((a,b)=>{ const d=dayOrder.indexOf(a.day)-dayOrder.indexOf(b.day); return d||a.start.localeCompare(b.start); }); }
+function alarmEnabled(item){ const v=item?.alarmOn; return !(v===false||v===0||v==='0'||v==='false'||v==='关'||v==='off'||v==='OFF'); }
 function getFiredMap(){ try{return JSON.parse(localStorage.getItem(ALARM_FIRED_KEY)||'{}')}catch{return{}} }
 function setFiredMap(m){ localStorage.setItem(ALARM_FIRED_KEY, JSON.stringify(m)); }
 
@@ -209,7 +210,7 @@ function switchRole(role){
 function openEditor(){ $('editorModal').classList.add('show'); }
 function closeEditor(){ $('editorModal').classList.remove('show'); }
 function clearForm(){ $('entryId').value=''; $('entryForm').reset(); $('saveBtn').textContent='保存'; $('day').value='周一'; $('type').value='课程'; $('alarmOn').checked=false; }
-function fillForm(it){ $('entryId').value=it.id||''; ['title','day','type','start','end','location','note'].forEach(k=>$(k).value=it[k]||''); $('alarmOn').checked=it.alarmOn!==false; $('saveBtn').textContent='保存修改'; openEditor(); }
+function fillForm(it){ $('entryId').value=it.id||''; ['title','day','type','start','end','location','note'].forEach(k=>$(k).value=it[k]||''); $('alarmOn').checked=alarmEnabled(it); $('saveBtn').textContent='保存修改'; openEditor(); }
 
 function render(){
   const fd=$('filterDay').value;
@@ -220,7 +221,7 @@ function render(){
 
   for(const it of view){
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${it.day}</td><td><span class="pill">${it.start} - ${it.end}</span></td><td style="font-size:20px">${typeIcons[it.type]||'📌'}</td><td>${esc(it.title)}</td><td>${esc(it.type)}</td><td>${esc(it.location||'-')}</td><td>${esc(it.note||'-')}</td><td>${it.alarmOn===false?'关':'开'}</td><td><div class="actions"><button class="btn-ghost" data-action="edit" data-id="${it.id}">编辑</button><button class="btn-danger" data-action="delete" data-id="${it.id}">删除</button></div></td>`;
+    tr.innerHTML=`<td>${it.day}</td><td><span class="pill">${it.start} - ${it.end}</span></td><td style="font-size:20px">${typeIcons[it.type]||'📌'}</td><td>${esc(it.title)}</td><td>${esc(it.type)}</td><td>${esc(it.location||'-')}</td><td>${esc(it.note||'-')}</td><td>${alarmEnabled(it)?'开':'关'}</td><td><div class="actions"><button class="btn-ghost" data-action="edit" data-id="${it.id}">编辑</button><button class="btn-danger" data-action="delete" data-id="${it.id}">删除</button></div></td>`;
     $('tbody').appendChild(tr);
   }
 
@@ -228,7 +229,7 @@ function render(){
   for(const day of days){
     const items=view.filter(x=>x.day===day);
     const col=document.createElement('div'); col.className='day-col';
-    col.innerHTML=`<h3>${day}<span class="muted">${items.length} 条</span></h3><div class="day-list">${items.length?items.map(it=>`<div class="tt-card"><div class="icon">${typeIcons[it.type]||'📌'}</div><div class="title">${esc(it.title)}</div><div class="meta">${esc(it.start)} - ${esc(it.end)}</div><div class="meta">${esc(it.type)} · ${esc(it.location||'-')}</div><div class="meta">闹铃：${it.alarmOn===false?'关':'开'}</div><div class="meta">${esc(it.note||'-')}</div><div class="card-actions"><button class="btn-ghost" data-action="edit" data-id="${it.id}">编辑</button><button class="btn-danger" data-action="delete" data-id="${it.id}">删除</button></div></div>`).join(''):'<div class="muted">暂无课程</div>'}</div>`;
+    col.innerHTML=`<h3>${day}<span class="muted">${items.length} 条</span></h3><div class="day-list">${items.length?items.map(it=>`<div class="tt-card"><div class="icon">${typeIcons[it.type]||'📌'}</div><div class="title">${esc(it.title)}</div><div class="meta">${esc(it.start)} - ${esc(it.end)}</div><div class="meta">${esc(it.type)} · ${esc(it.location||'-')}</div><div class="meta">闹铃：${alarmEnabled(it)?'开':'关'}</div><div class="meta">${esc(it.note||'-')}</div><div class="card-actions"><button class="btn-ghost" data-action="edit" data-id="${it.id}">编辑</button><button class="btn-danger" data-action="delete" data-id="${it.id}">删除</button></div></div>`).join(''):'<div class="muted">暂无课程</div>'}</div>`;
     $('cardsGrid').appendChild(col);
   }
 }
@@ -252,7 +253,7 @@ function alarmTick(){
   if(!Array.isArray(list)||!list.length) return;
   const now=new Date(); const fired=getFiredMap(); let changed=false;
   for(const item of list){
-    if(item.alarmOn===false) continue;
+    if(!alarmEnabled(item)) continue;
     const start=getNextOccurrence(item, now); if(!start) continue;
     const remindAt=start.getTime()-5*60000;
     const key=`${currentRole}_${item.id}_${start.toISOString().slice(0,10)}_${item.start}`;
@@ -341,7 +342,7 @@ $('copyPrevDayBtn').addEventListener('click',()=>{ const target=$('filterDay').v
 
 $('toggleViewBtn').addEventListener('click',()=>{ viewMode=viewMode==='table'?'card':'table'; syncViewMode(); });
 
-function rows(){ return sortList(list).map(i=>[i.day,`${i.start} - ${i.end}`,i.title,i.type,i.location||'',i.note||'',i.alarmOn===false?'关':'开']); }
+function rows(){ return sortList(list).map(i=>[i.day,`${i.start} - ${i.end}`,i.title,i.type,i.location||'',i.note||'',alarmEnabled(i)?'开':'关']); }
 function dl(content,name,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),500); }
 $('exportCsvBtn').addEventListener('click',()=>{ if(!list.length) return alert('没有可导出的数据'); const csv=[['星期','时间','事项','类型','地点','备注','闹铃'],...rows()].map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\r\n'); dl('\uFEFF'+csv,`${currentRole}-timetable.csv`,'text/csv;charset=utf-8;'); });
 $('exportExcelBtn').addEventListener('click',()=>{ if(!list.length) return alert('没有可导出的数据'); const html=`<html><head><meta charset="UTF-8"></head><body><table border="1"><tr><th>星期</th><th>时间</th><th>事项</th><th>类型</th><th>地点</th><th>备注</th><th>闹铃</th></tr>${rows().map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></body></html>`; dl('\uFEFF'+html,`${currentRole}-timetable.xls`,'application/vnd.ms-excel;charset=utf-8;'); });
@@ -354,7 +355,7 @@ function buildImage(){
   const rr=(a,b,cw,ch,r)=>{x.beginPath();x.moveTo(a+r,b);x.arcTo(a+cw,b,a+cw,b+ch,r);x.arcTo(a+cw,b+ch,a,b+ch,r);x.arcTo(a,b+ch,a,b,r);x.arcTo(a,b,a+cw,b,r);x.closePath()};
   const bg=x.createLinearGradient(0,0,w,h); bg.addColorStop(0,'#1a2452'); bg.addColorStop(1,'#3b1f66'); x.fillStyle=bg; x.fillRect(0,0,w,h);
   x.fillStyle='#fff'; x.font='700 24px Segoe UI,Microsoft YaHei'; x.fillText(`📅 ${currentRole} Time Table`,18,36); x.font='500 14px Segoe UI,Microsoft YaHei'; x.fillText(fd==='全部'?`全部安排 · 共 ${view.length} 条`:`${fd} · 共 ${view.length} 条`,18,58);
-  days.forEach((day,di)=>{ const its=view.filter(v=>v.day===day),cx=g+di*(colW+g),cy=top+g; x.fillStyle='rgba(255,255,255,.1)'; rr(cx,cy,colW,contentH-g*2,12); x.fill(); x.strokeStyle='rgba(255,255,255,.18)'; x.stroke(); x.fillStyle='#fff'; x.font='700 14px Segoe UI,Microsoft YaHei'; x.fillText(day,cx+10,cy+20); x.fillStyle='rgba(255,255,255,.72)'; x.font='500 11px Segoe UI'; x.fillText(`${its.length} 条`,cx+colW-34,cy+20); if(!its.length){ x.fillText('暂无课程',cx+10,cy+50); return; } its.forEach((it,i)=>{ const xx=cx+8,yy=cy+hHead+g+i*(hCard+gCard),ww=colW-16; x.fillStyle='rgba(255,255,255,.14)'; rr(xx,yy,ww,hCard,12); x.fill(); x.strokeStyle='rgba(255,255,255,.2)'; x.stroke(); x.fillStyle='#fff'; x.font='34px Segoe UI Emoji'; x.fillText(typeIcons[it.type]||'📌',xx+8,yy+40); x.font='700 15px Segoe UI,Microsoft YaHei'; x.fillText((it.title||'').slice(0,10),xx+8,yy+66); x.font='500 12px Segoe UI,Microsoft YaHei'; x.fillText(`${it.start} - ${it.end}`,xx+8,yy+88); x.fillText(`${it.type} · ${(it.location||'-').slice(0,12)}`,xx+8,yy+110); x.fillStyle='rgba(255,255,255,.72)'; x.fillText(`闹铃：${it.alarmOn===false?'关':'开'}`,xx+8,yy+132); }); });
+  days.forEach((day,di)=>{ const its=view.filter(v=>v.day===day),cx=g+di*(colW+g),cy=top+g; x.fillStyle='rgba(255,255,255,.1)'; rr(cx,cy,colW,contentH-g*2,12); x.fill(); x.strokeStyle='rgba(255,255,255,.18)'; x.stroke(); x.fillStyle='#fff'; x.font='700 14px Segoe UI,Microsoft YaHei'; x.fillText(day,cx+10,cy+20); x.fillStyle='rgba(255,255,255,.72)'; x.font='500 11px Segoe UI'; x.fillText(`${its.length} 条`,cx+colW-34,cy+20); if(!its.length){ x.fillText('暂无课程',cx+10,cy+50); return; } its.forEach((it,i)=>{ const xx=cx+8,yy=cy+hHead+g+i*(hCard+gCard),ww=colW-16; x.fillStyle='rgba(255,255,255,.14)'; rr(xx,yy,ww,hCard,12); x.fill(); x.strokeStyle='rgba(255,255,255,.2)'; x.stroke(); x.fillStyle='#fff'; x.font='34px Segoe UI Emoji'; x.fillText(typeIcons[it.type]||'📌',xx+8,yy+40); x.font='700 15px Segoe UI,Microsoft YaHei'; x.fillText((it.title||'').slice(0,10),xx+8,yy+66); x.font='500 12px Segoe UI,Microsoft YaHei'; x.fillText(`${it.start} - ${it.end}`,xx+8,yy+88); x.fillText(`${it.type} · ${(it.location||'-').slice(0,12)}`,xx+8,yy+110); x.fillStyle='rgba(255,255,255,.72)'; x.fillText(`闹铃：${alarmEnabled(it)?'开':'关'}`,xx+8,yy+132); }); });
   return c;
 }
 $('exportImageBtn').addEventListener('click',()=>{ if(!list.length) return alert('没有可导出的数据'); const c=buildImage(); const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download=`${currentRole}-timetable.png`; a.click(); });

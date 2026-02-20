@@ -133,7 +133,7 @@ async function githubPutFile(cfg,path,content,message){
 }
 
 function clearForm(){ $('entryId').value=''; $('entryForm').reset(); $('saveBtn').textContent='新增'; $('day').value='周一'; $('type').value='课程'; }
-function fillForm(it){ ['entryId','title','day','type','start','end','location','note'].forEach(k=>$(k).value=it[k]||''); $('saveBtn').textContent='保存修改'; window.scrollTo({top:0,behavior:'smooth'}); }
+function fillForm(it){ ['entryId','title','day','type','start','end','location','note'].forEach(k=>$(k).value=it[k]||''); $('saveBtn').textContent='保存修改'; applyEditorCollapsed(false); window.scrollTo({top:0,behavior:'smooth'}); }
 
 function render(){
   const fd=$('filterDay').value;

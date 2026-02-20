@@ -134,6 +134,7 @@
 const STORAGE_KEY='pretty_timetable_v1';
 const ROLE_LIST_KEY='timetable_roles_v1';
 const ROLE_ACTIVE_KEY='timetable_role_active_v1';
+const ROLE_MIGRATED_KEY='timetable_roles_migrated_v1';
 const GITHUB_CFG_KEY='timetable_github_cfg_v1';
 const ROLES_COLLAPSED_KEY='timetable_roles_collapsed_v1';
 const ALARM_FIRED_KEY='timetable_alarm_fired_v1';
@@ -145,7 +146,7 @@ let list=[];
 let viewMode='card';
 
 function roleStorageKey(role){ return `${STORAGE_KEY}__${role}`; }
-function getRoles(){ try{ const r=JSON.parse(localStorage.getItem(ROLE_LIST_KEY)||'["Jackson"]'); return Array.isArray(r)&&r.length?r:['Jackson']; }catch{return['Jackson']} }
+function getRoles(){ try{ const r=JSON.parse(localStorage.getItem(ROLE_LIST_KEY)||'[]'); return Array.isArray(r)?r:[]; }catch{return[]} }
 function setRoles(roles){ localStorage.setItem(ROLE_LIST_KEY, JSON.stringify([...new Set(roles)])); }
 function loadRole(role){ try{return JSON.parse(localStorage.getItem(roleStorageKey(role))||'[]')}catch{return[]} }
 function persist(){ localStorage.setItem(roleStorageKey(currentRole), JSON.stringify(list)); }
@@ -156,13 +157,17 @@ function getFiredMap(){ try{return JSON.parse(localStorage.getItem(ALARM_FIRED_K
 function setFiredMap(m){ localStorage.setItem(ALARM_FIRED_KEY, JSON.stringify(m)); }
 
 function migrateToJackson(){
-  const roles=getRoles();
+  if(localStorage.getItem(ROLE_MIGRATED_KEY)==='1') return;
+  let roles=getRoles();
+  if(!roles.length){ roles=['Jackson']; setRoles(roles); }
   if(!roles.includes('Jackson')){ roles.push('Jackson'); setRoles(roles); }
   const jackson=loadRole('Jackson');
-  if(jackson.length) return;
-  const legacy=(()=>{try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{return[]}})();
-  if(Array.isArray(legacy)&&legacy.length){ localStorage.setItem(roleStorageKey('Jackson'), JSON.stringify(legacy)); return; }
-  for(const r of roles){ const d=loadRole(r); if(d.length){ localStorage.setItem(roleStorageKey('Jackson'), JSON.stringify(d)); return; } }
+  if(!jackson.length){
+    const legacy=(()=>{try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{return[]}})();
+    if(Array.isArray(legacy)&&legacy.length) localStorage.setItem(roleStorageKey('Jackson'), JSON.stringify(legacy));
+    else for(const r of roles){ const d=loadRole(r); if(d.length){ localStorage.setItem(roleStorageKey('Jackson'), JSON.stringify(d)); break; } }
+  }
+  localStorage.setItem(ROLE_MIGRATED_KEY,'1');
 }
 function closeAllExistingAlarms(){
   const roles=getRoles();
@@ -388,7 +393,7 @@ $('forceRefreshBtn').addEventListener('click',async()=>{
   closeAllExistingAlarms();
   const roles=getRoles();
   const saved=localStorage.getItem(ROLE_ACTIVE_KEY);
-  currentRole=(saved&&roles.includes(saved))?saved:'Jackson';
+  currentRole=(saved&&roles.includes(saved))?saved:(roles[0]||'Jackson');
   list=loadRole(currentRole);
   const rc=localStorage.getItem(ROLES_COLLAPSED_KEY);
   const defaultRc=window.matchMedia('(max-width: 980px)').matches;

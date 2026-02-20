@@ -1,0 +1,915 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1a2452" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Time Table" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <title>Time Table Â· è¯¾ç¨‹/æ—¥ç¨‹ç®¡ç†</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --card: rgba(255,255,255,.08);
+      --card-strong: rgba(255,255,255,.14);
+      --text: #eaf0ff;
+      --muted: #b8c3e8;
+      --primary: #6ea8ff;
+      --accent: #9a7bff;
+      --danger: #ff6f8e;
+      --ok: #58d68d;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at -10% -20%, #2b3f7f 0%, transparent 60%),
+        radial-gradient(900px 700px at 120% 120%, #4a2c8a 0%, transparent 55%),
+        var(--bg);
+      min-height: 100vh;
+      padding: 28px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--radius);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+    }
+
+    .form-panel {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: 22px;
+      letter-spacing: .2px;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    label { font-size: 13px; color: var(--muted); display: block; margin: 10px 0 6px; }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(10,12,24,.45);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline: none;
+      transition: .18s;
+    }
+
+    textarea { min-height: 72px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(110,168,255,.2);
+    }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform .08s ease, opacity .2s;
+    }
+
+    button:active { transform: translateY(1px); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); }
+    .btn-ghost { background: rgba(255,255,255,.12); }
+    .btn-danger { background: linear-gradient(135deg, #ff5f7b, #ff7f5f); }
+
+    .board {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toolbar .left,
+    .toolbar .right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      font-size: 12px;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.2);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.15);
+    }
+
+    .view-wrap.hidden { display: none; }
+
+    .cards-wrap {
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.15);
+      padding: 12px;
+      background: rgba(8,10,20,.35);
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(170px, 1fr));
+      gap: 12px;
+      min-width: 980px;
+    }
+
+    .day-col {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 12px;
+      padding: 10px;
+      min-height: 220px;
+    }
+
+    .day-col h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .day-col .count {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .day-list {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .tt-card {
+      background: linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.2);
+      min-height: 210px;
+      display: grid;
+      grid-template-rows: 44px 42px 20px 20px 34px auto;
+      align-items: start;
+    }
+
+    .tt-card .icon {
+      font-size: 42px;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .tt-card .title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 16px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .tt-card .meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 2px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .tt-card .card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      align-self: end;
+    }
+
+    .tt-card .card-actions button {
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 780px;
+      background: rgba(8,10,20,.4);
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      text-align: left;
+      padding: 11px;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: rgba(255,255,255,.08);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      font-weight: 700;
+    }
+
+    tr:hover td { background: rgba(255,255,255,.06); }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.1);
+      margin-right: 4px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .actions button {
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    .muted { color: var(--muted); font-size: 12px; }
+
+    .empty {
+      text-align: center;
+      padding: 28px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 980px) {
+      .container { grid-template-columns: 1fr; }
+      .form-panel { position: static; }
+      body { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <aside class="panel form-panel">
+      <h1>ðŸ“… Time Table</h1>
+      <div class="sub">æ”¯æŒå¢žåˆ æ”¹æŸ¥ï¼ˆæœ¬åœ°è‡ªåŠ¨ä¿å­˜ï¼‰</div>
+
+      <form id="entryForm">
+        <input type="hidden" id="entryId" />
+
+        <label for="title">è¯¾ç¨‹ / äº‹é¡¹</label>
+        <input id="title" required placeholder="ä¾‹å¦‚ï¼šæ•°å­¦ / é¡¹ç›®æ™¨ä¼š" />
+
+        <div class="row">
+          <div>
+            <label for="day">æ˜ŸæœŸ</label>
+            <select id="day" required>
+              <option value="å‘¨ä¸€">å‘¨ä¸€</option>
+              <option value="å‘¨äºŒ">å‘¨äºŒ</option>
+              <option value="å‘¨ä¸‰">å‘¨ä¸‰</option>
+              <option value="å‘¨å››">å‘¨å››</option>
+              <option value="å‘¨äº”">å‘¨äº”</option>
+              <option value="å‘¨å…­">å‘¨å…­</option>
+              <option value="å‘¨æ—¥">å‘¨æ—¥</option>
+            </select>
+          </div>
+          <div>
+            <label for="type">ç±»åž‹</label>
+            <select id="type" required>
+              <option value="è¯¾ç¨‹">è¯¾ç¨‹</option>
+              <option value="ä¼šè®®">ä¼šè®®</option>
+              <option value="å­¦ä¹ ">å­¦ä¹ </option>
+              <option value="é”»ç‚¼">é”»ç‚¼</option>
+              <option value="éŸ³ä¹">éŸ³ä¹</option>
+              <option value="èˆžè¹ˆ">èˆžè¹ˆ</option>
+              <option value="å…¶ä»–">å…¶ä»–</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="start">å¼€å§‹æ—¶é—´</label>
+            <input id="start" type="time" required />
+          </div>
+          <div>
+            <label for="end">ç»“æŸæ—¶é—´</label>
+            <input id="end" type="time" required />
+          </div>
+        </div>
+
+        <label for="location">åœ°ç‚¹</label>
+        <input id="location" placeholder="ä¾‹å¦‚ï¼šA-302 / Zoom" />
+
+        <label for="note">å¤‡æ³¨</label>
+        <textarea id="note" placeholder="å¯é€‰"></textarea>
+
+        <div class="btn-row">
+          <button class="btn-primary" type="submit" id="saveBtn">æ–°å¢ž</button>
+          <button class="btn-ghost" type="button" id="resetBtn">æ¸…ç©º</button>
+        </div>
+      </form>
+    </aside>
+
+    <main class="panel board">
+      <div class="toolbar">
+        <div class="left">
+          <span class="chip" id="countChip">å…± 0 æ¡</span>
+          <select id="filterDay" title="æŒ‰æ˜ŸæœŸç­›é€‰">
+            <option value="å…¨éƒ¨">å…¨éƒ¨æ˜ŸæœŸ</option>
+            <option value="å‘¨ä¸€">å‘¨ä¸€</option>
+            <option value="å‘¨äºŒ">å‘¨äºŒ</option>
+            <option value="å‘¨ä¸‰">å‘¨ä¸‰</option>
+            <option value="å‘¨å››">å‘¨å››</option>
+            <option value="å‘¨äº”">å‘¨äº”</option>
+            <option value="å‘¨å…­">å‘¨å…­</option>
+            <option value="å‘¨æ—¥">å‘¨æ—¥</option>
+          </select>
+        </div>
+        <div class="right">
+          <button class="btn-ghost" id="copyPrevDayBtn" type="button">å¤åˆ¶å‰ä¸€å¤©</button>
+          <button class="btn-ghost" id="toggleViewBtn" type="button">åˆ‡æ¢åˆ°å¡ç‰‡æ¨¡å¼</button>
+          <button class="btn-ghost" id="exportImageBtn" type="button">å¯¼å‡ºå›¾ç‰‡</button>
+          <button class="btn-ghost" id="shareImageBtn" type="button">åˆ†äº«å›¾ç‰‡</button>
+          <button class="btn-ghost" id="exportCsvBtn" type="button">å¯¼å‡º CSV</button>
+          <button class="btn-ghost" id="exportExcelBtn" type="button">å¯¼å‡º Excel</button>
+          <button class="btn-danger" id="clearAllBtn" type="button">æ¸…ç©ºå…¨éƒ¨</button>
+        </div>
+      </div>
+
+      <div class="muted">æç¤ºï¼šç‚¹å‡»â€œç¼–è¾‘â€å¯ä¿®æ”¹ï¼›åˆ é™¤åŽä¸å¯æ¢å¤ã€‚æ•°æ®ä¿å­˜åœ¨æµè§ˆå™¨æœ¬åœ°ï¼ˆlocalStorageï¼‰ã€‚</div>
+
+      <div id="tableWrap" class="table-wrap view-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>æ˜ŸæœŸ</th>
+              <th>æ—¶é—´</th>
+              <th>å›¾æ ‡</th>
+              <th>äº‹é¡¹</th>
+              <th>ç±»åž‹</th>
+              <th>åœ°ç‚¹</th>
+              <th>å¤‡æ³¨</th>
+              <th>æ“ä½œ</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div id="cardsWrap" class="cards-wrap view-wrap hidden">
+        <div id="cardsGrid" class="cards-grid"></div>
+      </div>
+
+      <div id="empty" class="empty">è¿˜æ²¡æœ‰å®‰æŽ’ï¼Œå…ˆåœ¨å·¦ä¾§æ·»åŠ ç¬¬ä¸€æ¡å§ âœ¨</div>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'pretty_timetable_v1';
+    const dayOrder = ['å‘¨ä¸€','å‘¨äºŒ','å‘¨ä¸‰','å‘¨å››','å‘¨äº”','å‘¨å…­','å‘¨æ—¥'];
+    const typeIcons = {
+      'è¯¾ç¨‹': 'ðŸ“˜',
+      'ä¼šè®®': 'ðŸ§‘â€ðŸ’¼',
+      'å­¦ä¹ ': 'ðŸ§ ',
+      'é”»ç‚¼': 'ðŸƒ',
+      'éŸ³ä¹': 'ðŸŽµ',
+      'èˆžè¹ˆ': 'ðŸ’ƒ',
+      'å…¶ä»–': 'ðŸ—‚ï¸'
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    const form = $('entryForm');
+    const tbody = $('tbody');
+    const cardsGrid = $('cardsGrid');
+    const tableWrap = $('tableWrap');
+    const cardsWrap = $('cardsWrap');
+    const toggleViewBtn = $('toggleViewBtn');
+    const empty = $('empty');
+    const countChip = $('countChip');
+    const saveBtn = $('saveBtn');
+
+    let viewMode = 'table';
+
+    let list = load();
+
+    function load() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function sortList(arr) {
+      return [...arr].sort((a, b) => {
+        const d = dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day);
+        if (d !== 0) return d;
+        return a.start.localeCompare(b.start);
+      });
+    }
+
+    function timeValid(start, end) {
+      return start < end;
+    }
+
+    function clearForm() {
+      $('entryId').value = '';
+      form.reset();
+      saveBtn.textContent = 'æ–°å¢ž';
+      $('day').value = 'å‘¨ä¸€';
+      $('type').value = 'è¯¾ç¨‹';
+    }
+
+    function fillForm(item) {
+      $('entryId').value = item.id;
+      $('title').value = item.title;
+      $('day').value = item.day;
+      $('type').value = item.type;
+      $('start').value = item.start;
+      $('end').value = item.end;
+      $('location').value = item.location || '';
+      $('note').value = item.note || '';
+      saveBtn.textContent = 'ä¿å­˜ä¿®æ”¹';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function render() {
+      const filterDay = $('filterDay').value;
+      const view = sortList(list).filter(i => filterDay === 'å…¨éƒ¨' || i.day === filterDay);
+
+      tbody.innerHTML = '';
+      cardsGrid.innerHTML = '';
+      empty.style.display = view.length ? 'none' : 'block';
+      countChip.textContent = `å…± ${view.length} æ¡`;
+
+      for (const item of view) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.day}</td>
+          <td><span class="pill">${item.start} - ${item.end}</span></td>
+          <td title="${escapeHtml(item.type)}" style="font-size:20px;line-height:1;">${typeIcons[item.type] || 'ðŸ“Œ'}</td>
+          <td>${escapeHtml(item.title)}</td>
+          <td>${escapeHtml(item.type)}</td>
+          <td>${escapeHtml(item.location || '-')}</td>
+          <td>${escapeHtml(item.note || '-')}</td>
+          <td>
+            <div class="actions">
+              <button class="btn-ghost" data-action="edit" data-id="${item.id}">ç¼–è¾‘</button>
+              <button class="btn-danger" data-action="delete" data-id="${item.id}">åˆ é™¤</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      const daysToShow = filterDay === 'å…¨éƒ¨' ? dayOrder : [filterDay];
+      for (const day of daysToShow) {
+        const dayItems = view.filter(x => x.day === day);
+        const col = document.createElement('div');
+        col.className = 'day-col';
+
+        const listHtml = dayItems.length
+          ? dayItems.map(item => `
+            <div class="tt-card">
+              <div class="icon">${typeIcons[item.type] || 'ðŸ“Œ'}</div>
+              <div class="title">${escapeHtml(item.title)}</div>
+              <div class="meta">${escapeHtml(item.start)} - ${escapeHtml(item.end)}</div>
+              <div class="meta">${escapeHtml(item.type)} Â· ${escapeHtml(item.location || '-')}</div>
+              <div class="meta">${escapeHtml(item.note || '-')}</div>
+              <div class="card-actions">
+                <button class="btn-ghost" data-action="edit" data-id="${item.id}">ç¼–è¾‘</button>
+                <button class="btn-danger" data-action="delete" data-id="${item.id}">åˆ é™¤</button>
+              </div>
+            </div>
+          `).join('')
+          : '<div class="muted">æš‚æ— è¯¾ç¨‹</div>';
+
+        col.innerHTML = `
+          <h3>${day}<span class="count">${dayItems.length} æ¡</span></h3>
+          <div class="day-list">${listHtml}</div>
+        `;
+        cardsGrid.appendChild(col);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = $('entryId').value.trim();
+
+      const item = {
+        id: id || uid(),
+        title: $('title').value.trim(),
+        day: $('day').value,
+        type: $('type').value,
+        start: $('start').value,
+        end: $('end').value,
+        location: $('location').value.trim(),
+        note: $('note').value.trim()
+      };
+
+      if (!item.title || !item.start || !item.end) {
+        alert('è¯·å¡«å†™å®Œæ•´ä¿¡æ¯');
+        return;
+      }
+      if (!timeValid(item.start, item.end)) {
+        alert('ç»“æŸæ—¶é—´å¿…é¡»æ™šäºŽå¼€å§‹æ—¶é—´');
+        return;
+      }
+
+      if (id) {
+        const idx = list.findIndex(x => x.id === id);
+        if (idx !== -1) list[idx] = item;
+      } else {
+        list.push(item);
+      }
+
+      persist();
+      render();
+      clearForm();
+    });
+
+    $('resetBtn').addEventListener('click', clearForm);
+
+    $('filterDay').addEventListener('change', render);
+
+    function formatExportRows() {
+      return sortList(list).map(item => [
+        item.day,
+        `${item.start} - ${item.end}`,
+        item.title,
+        item.type,
+        item.location || '',
+        item.note || ''
+      ]);
+    }
+
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportCSV() {
+      if (!list.length) {
+        alert('æ²¡æœ‰å¯å¯¼å‡ºçš„æ•°æ®');
+        return;
+      }
+      const header = ['æ˜ŸæœŸ', 'æ—¶é—´', 'äº‹é¡¹', 'ç±»åž‹', 'åœ°ç‚¹', 'å¤‡æ³¨'];
+      const rows = formatExportRows();
+      const csv = [header, ...rows]
+        .map(cols => cols.map(v => `"${String(v).replaceAll('"', '""')}"`).join(','))
+        .join('\r\n');
+      downloadFile('\uFEFF' + csv, 'timetable.csv', 'text/csv;charset=utf-8;');
+    }
+
+    function exportExcel() {
+      if (!list.length) {
+        alert('æ²¡æœ‰å¯å¯¼å‡ºçš„æ•°æ®');
+        return;
+      }
+      const rows = formatExportRows();
+      const html = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8"></head>
+<body>
+<table border="1">
+  <tr><th>æ˜ŸæœŸ</th><th>æ—¶é—´</th><th>äº‹é¡¹</th><th>ç±»åž‹</th><th>åœ°ç‚¹</th><th>å¤‡æ³¨</th></tr>
+  ${rows.map(r => `<tr>${r.map(c => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}
+</table>
+</body>
+</html>`;
+      downloadFile('\uFEFF' + html, 'timetable.xls', 'application/vnd.ms-excel;charset=utf-8;');
+    }
+
+    function buildExportCanvas() {
+      const filterDay = $('filterDay').value;
+      const view = sortList(list).filter(i => filterDay === 'å…¨éƒ¨' || i.day === filterDay);
+      const daysToShow = filterDay === 'å…¨éƒ¨' ? dayOrder : [filterDay];
+
+      const pageGap = 14;
+      const colW = 178;
+      const colHeadH = 30;
+      const cardH = 210;
+      const cardGap = 8;
+      const topH = 92;
+
+      const maxCards = Math.max(1, ...daysToShow.map(day => view.filter(x => x.day === day).length));
+      const contentH = pageGap + colHeadH + pageGap + maxCards * cardH + Math.max(0, maxCards - 1) * cardGap + pageGap;
+      const width = daysToShow.length * colW + (daysToShow.length + 1) * pageGap;
+      const height = topH + contentH;
+
+      const canvas = document.createElement('canvas');
+      const dpr = Math.max(2, window.devicePixelRatio || 1);
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      const bg = ctx.createLinearGradient(0, 0, width, height);
+      bg.addColorStop(0, '#1a2452');
+      bg.addColorStop(1, '#3b1f66');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '700 28px Segoe UI, Microsoft YaHei, sans-serif';
+      ctx.fillText('ðŸ“… Time Table', 18, 38);
+      ctx.font = '500 14px Segoe UI, Microsoft YaHei, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,.88)';
+      ctx.fillText(filterDay === 'å…¨éƒ¨' ? `å…¨éƒ¨å®‰æŽ’ Â· å…± ${view.length} æ¡` : `${filterDay} Â· å…± ${view.length} æ¡`, 18, 62);
+      ctx.fillStyle = 'rgba(255,255,255,.7)';
+      ctx.fillText(`å¯¼å‡ºæ—¶é—´ï¼š${new Date().toLocaleString()}`, 18, 82);
+
+      daysToShow.forEach((day, dayIdx) => {
+        const dayItems = view.filter(x => x.day === day);
+        const colX = pageGap + dayIdx * (colW + pageGap);
+        const colY = topH + pageGap;
+
+        ctx.fillStyle = 'rgba(255,255,255,.10)';
+        roundRect(colX, colY, colW, contentH - pageGap * 2, 12);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.18)';
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = '700 14px Segoe UI, Microsoft YaHei, sans-serif';
+        ctx.fillText(day, colX + 10, colY + 20);
+        ctx.fillStyle = 'rgba(255,255,255,.72)';
+        ctx.font = '500 11px Segoe UI, Microsoft YaHei, sans-serif';
+        ctx.fillText(`${dayItems.length} æ¡`, colX + colW - 36, colY + 20);
+
+        if (!dayItems.length) {
+          ctx.fillStyle = 'rgba(255,255,255,.55)';
+          ctx.font = '500 12px Segoe UI, Microsoft YaHei, sans-serif';
+          ctx.fillText('æš‚æ— è¯¾ç¨‹', colX + 10, colY + 50);
+          return;
+        }
+
+        dayItems.forEach((item, i) => {
+          const x = colX + 8;
+          const y = colY + colHeadH + pageGap + i * (cardH + cardGap);
+          const w = colW - 16;
+
+          ctx.fillStyle = 'rgba(255,255,255,.14)';
+          roundRect(x, y, w, cardH, 12);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,.2)';
+          ctx.stroke();
+
+          ctx.font = '34px Segoe UI Emoji, Segoe UI, sans-serif';
+          ctx.fillStyle = '#fff';
+          ctx.fillText(typeIcons[item.type] || 'ðŸ“Œ', x + 8, y + 40);
+
+          ctx.fillStyle = '#fff';
+          ctx.font = '700 15px Segoe UI, Microsoft YaHei, sans-serif';
+          ctx.fillText((item.title || '').slice(0, 10), x + 8, y + 66);
+
+          ctx.fillStyle = 'rgba(255,255,255,.9)';
+          ctx.font = '500 12px Segoe UI, Microsoft YaHei, sans-serif';
+          ctx.fillText(`${item.start} - ${item.end}`, x + 8, y + 88);
+          ctx.fillText(`${item.type} Â· ${(item.location || '-').slice(0, 12)}`, x + 8, y + 110);
+          ctx.fillStyle = 'rgba(255,255,255,.72)';
+          ctx.fillText(`å¤‡æ³¨ï¼š${(item.note || '-').slice(0, 12)}`, x + 8, y + 132);
+        });
+      });
+
+      return canvas;
+    }
+
+    function exportImage() {
+      if (!list.length) {
+        alert('æ²¡æœ‰å¯å¯¼å‡ºçš„æ•°æ®');
+        return;
+      }
+      const canvas = buildExportCanvas();
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = 'timetable.png';
+      a.click();
+    }
+
+    async function shareImage() {
+      if (!list.length) {
+        alert('æ²¡æœ‰å¯åˆ†äº«çš„æ•°æ®');
+        return;
+      }
+      if (!navigator.share) {
+        alert('å½“å‰æµè§ˆå™¨ä¸æ”¯æŒç›´æŽ¥åˆ†äº«ï¼Œè¯·å…ˆç‚¹â€œå¯¼å‡ºå›¾ç‰‡â€å†å‘ç»™å¾®ä¿¡å¥½å‹ã€‚');
+        return;
+      }
+
+      const canvas = buildExportCanvas();
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) {
+        alert('ç”Ÿæˆå›¾ç‰‡å¤±è´¥ï¼Œè¯·é‡è¯•');
+        return;
+      }
+
+      const file = new File([blob], 'timetable.png', { type: 'image/png' });
+      const shareData = { files: [file], title: 'è¯¾ç¨‹è¡¨', text: 'æˆ‘çš„è¯¾ç¨‹è¡¨' };
+
+      try {
+        if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+          throw new Error('å½“å‰çŽ¯å¢ƒä¸æ”¯æŒæ–‡ä»¶åˆ†äº«');
+        }
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err?.name !== 'AbortError') {
+          alert('å½“å‰çŽ¯å¢ƒä¸èƒ½ç›´æŽ¥æ‹‰èµ·å¾®ä¿¡åˆ†äº«ï¼Œè¯·ç”¨â€œå¯¼å‡ºå›¾ç‰‡â€åŽåœ¨å¾®ä¿¡é‡Œå‘é€ã€‚');
+        }
+      }
+    }
+
+    function copyFromPreviousDay() {
+      const targetDay = $('filterDay').value;
+      if (targetDay === 'å…¨éƒ¨') {
+        alert('è¯·å…ˆåœ¨ç­›é€‰é‡Œé€‰æ‹©ç›®æ ‡æ˜ŸæœŸï¼Œå†å¤åˆ¶å‰ä¸€å¤©è¯¾ç¨‹');
+        return;
+      }
+
+      const targetIdx = dayOrder.indexOf(targetDay);
+      if (targetIdx === -1) return;
+      const prevDay = dayOrder[(targetIdx + dayOrder.length - 1) % dayOrder.length];
+
+      const sourceItems = sortList(list).filter(x => x.day === prevDay);
+      if (!sourceItems.length) {
+        alert(`${prevDay} æ²¡æœ‰å¯å¤åˆ¶çš„è¯¾ç¨‹`);
+        return;
+      }
+
+      const existedKeys = new Set(
+        list
+          .filter(x => x.day === targetDay)
+          .map(x => `${x.start}|${x.end}|${x.title}|${x.type}|${x.location || ''}|${x.note || ''}`)
+      );
+
+      let added = 0;
+      for (const s of sourceItems) {
+        const key = `${s.start}|${s.end}|${s.title}|${s.type}|${s.location || ''}|${s.note || ''}`;
+        if (existedKeys.has(key)) continue;
+        list.push({ ...s, id: uid(), day: targetDay });
+        existedKeys.add(key);
+        added++;
+      }
+
+      persist();
+      render();
+      alert(`å·²ä»Ž ${prevDay} å¤åˆ¶åˆ° ${targetDay}ï¼šæ–°å¢ž ${added} æ¡`);
+    }
+
+    $('copyPrevDayBtn').addEventListener('click', copyFromPreviousDay);
+    $('exportImageBtn').addEventListener('click', exportImage);
+    $('shareImageBtn').addEventListener('click', shareImage);
+    $('exportCsvBtn').addEventListener('click', exportCSV);
+    $('exportExcelBtn').addEventListener('click', exportExcel);
+
+    function setViewMode(mode) {
+      viewMode = mode;
+      const isCard = mode === 'card';
+      tableWrap.classList.toggle('hidden', isCard);
+      cardsWrap.classList.toggle('hidden', !isCard);
+      toggleViewBtn.textContent = isCard ? 'åˆ‡æ¢åˆ°è¡¨æ ¼æ¨¡å¼' : 'åˆ‡æ¢åˆ°å¡ç‰‡æ¨¡å¼';
+    }
+
+    toggleViewBtn.addEventListener('click', () => {
+      setViewMode(viewMode === 'table' ? 'card' : 'table');
+    });
+
+    function onActionClick(e) {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      const item = list.find(x => x.id === id);
+      if (!item) return;
+
+      if (action === 'edit') {
+        fillForm(item);
+      }
+
+      if (action === 'delete') {
+        if (!confirm(`ç¡®å®šåˆ é™¤ã€Œ${item.title}ã€å—ï¼Ÿ`)) return;
+        list = list.filter(x => x.id !== id);
+        persist();
+        render();
+      }
+    }
+
+    tbody.addEventListener('click', onActionClick);
+    cardsGrid.addEventListener('click', onActionClick);
+
+    $('clearAllBtn').addEventListener('click', () => {
+      if (!list.length) return;
+      if (!confirm('ç¡®å®šæ¸…ç©ºå…¨éƒ¨å®‰æŽ’å—ï¼Ÿæ­¤æ“ä½œä¸å¯æ¢å¤ã€‚')) return;
+      list = [];
+      persist();
+      render();
+      clearForm();
+    });
+
+    // åˆå§‹é»˜è®¤å€¼
+    $('day').value = 'å‘¨ä¸€';
+    $('type').value = 'è¯¾ç¨‹';
+    setViewMode('table');
+    render();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

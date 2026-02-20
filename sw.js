@@ -1,4 +1,4 @@
-const CACHE_NAME = 'timetable-pwa-v2';
+const CACHE_NAME = 'timetable-pwa-v3';
 const ASSETS = ['./index.html', './manifest.webmanifest', './icon.svg', './data.json'];
 
 self.addEventListener('install', (event) => {

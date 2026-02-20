@@ -55,17 +55,19 @@
       <div class="row"><div><label>开始时间</label><input id="start" type="time" required /></div><div><label>结束时间</label><input id="end" type="time" required /></div></div>
       <label>地点</label><input id="location" placeholder="例如：A-302 / Zoom" />
       <label>备注</label><textarea id="note" placeholder="可选"></textarea>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;"><input id="alarmOn" type="checkbox" checked style="width:auto;"> 开启闹铃（课前5分钟）</label>
       <div class="btn-row"><button class="btn-primary" id="saveBtn" type="submit">新增</button><button class="btn-ghost" type="button" id="resetBtn">清空</button></div>
     </form>
   </aside>
 
   <main class="panel board">
     <div class="toolbar">
-      <div class="left"><span class="chip" id="countChip">共 0 条</span>
+      <div class="left"><span class="chip" id="countChip">共 0 条</span><span class="chip" id="alarmStateChip">闹铃：关</span>
         <select id="filterDay"><option value="全部">全部星期</option><option>周一</option><option>周二</option><option>周三</option><option>周四</option><option>周五</option><option>周六</option><option>周日</option></select>
       </div>
       <div class="right">
         <button class="btn-ghost" id="copyPrevDayBtn" type="button">复制前一天</button>
+        <button class="btn-ghost" id="toggleAlarmBtn" type="button">打开闹铃</button>
         <button class="btn-ghost" id="backupGithubBtn" type="button">备份到 GitHub</button>
         <button class="btn-ghost" id="restoreGithubBtn" type="button">恢复最近备份</button>
         <button class="btn-ghost" id="forceRefreshBtn" type="button">强制更新</button>
@@ -80,7 +82,7 @@
 
     <div class="muted">提示：点击“编辑”可修改；删除后不可恢复。数据保存在浏览器本地（localStorage）。</div>
 
-    <div id="tableWrap" class="table-wrap"><table><thead><tr><th>星期</th><th>时间</th><th>图标</th><th>事项</th><th>类型</th><th>地点</th><th>备注</th><th>操作</th></tr></thead><tbody id="tbody"></tbody></table></div>
+    <div id="tableWrap" class="table-wrap"><table><thead><tr><th>星期</th><th>时间</th><th>图标</th><th>事项</th><th>类型</th><th>地点</th><th>备注</th><th>闹铃</th><th>操作</th></tr></thead><tbody id="tbody"></tbody></table></div>
     <div id="cardsWrap" class="cards-wrap hidden"><div id="cardsGrid" class="cards-grid"></div></div>
     <div id="empty" class="empty">还没有安排，先在左侧添加第一条吧 ✨</div>
   </main>
@@ -90,6 +92,8 @@
 const STORAGE_KEY='pretty_timetable_v1';
 const GITHUB_CFG_KEY='timetable_github_cfg_v1';
 const EDITOR_COLLAPSED_KEY='timetable_editor_collapsed_v1';
+const ALARM_MASTER_KEY='timetable_alarm_master_v1';
+const ALARM_FIRED_KEY='timetable_alarm_fired_v1';
 const dayOrder=['周一','周二','周三','周四','周五','周六','周日'];
 const typeIcons={课程:'📘',会议:'🧑‍💼',学习:'🧠',锻炼:'🏃',音乐:'🎵',舞蹈:'💃',其他:'🗂️'};
 const $=id=>document.getElementById(id);
@@ -100,6 +104,37 @@ function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(list))}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function sortList(arr){return [...arr].sort((a,b)=>{const d=dayOrder.indexOf(a.day)-dayOrder.indexOf(b.day); return d||a.start.localeCompare(b.start)})}
 function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
+function isAlarmEnabled(){ return localStorage.getItem(ALARM_MASTER_KEY)==='1'; }
+function setAlarmEnabled(v){ localStorage.setItem(ALARM_MASTER_KEY, v?'1':'0'); updateAlarmUI(); }
+function getFiredMap(){ try{return JSON.parse(localStorage.getItem(ALARM_FIRED_KEY)||'{}')}catch{return{}} }
+function setFiredMap(m){ localStorage.setItem(ALARM_FIRED_KEY, JSON.stringify(m)); }
+function updateAlarmUI(){ const on=isAlarmEnabled(); $('alarmStateChip').textContent=`闹铃：${on?'开':'关'}`; $('toggleAlarmBtn').textContent=on?'关闭闹铃':'打开闹铃'; }
+function getNextOccurrence(item, now=new Date()){
+  const dayMap={'周日':0,'周一':1,'周二':2,'周三':3,'周四':4,'周五':5,'周六':6};
+  const t=(item.start||'00:00').split(':'); const hh=Number(t[0]||0), mm=Number(t[1]||0);
+  const target=dayMap[item.day]; if(target===undefined) return null;
+  const d=new Date(now); d.setHours(hh,mm,0,0);
+  const ahead=(target-now.getDay()+7)%7; d.setDate(now.getDate()+ahead);
+  if(d.getTime()-5*60*1000<=now.getTime()) d.setDate(d.getDate()+7);
+  return d;
+}
+function alarmTick(){
+  if(!isAlarmEnabled()||!Array.isArray(list)||!list.length) return;
+  const now=new Date(); const fired=getFiredMap(); let changed=false;
+  for(const item of list){
+    if(item.alarmOn===false) continue;
+    const start=getNextOccurrence(item, now); if(!start) continue;
+    const remindAt=start.getTime()-5*60*1000;
+    const key=`${item.id}_${start.toISOString().slice(0,10)}_${item.start}`;
+    if(now.getTime()>=remindAt && now.getTime()<start.getTime() && !fired[key]){
+      const msg=`${item.title} ${item.day} ${item.start} 即将开始（5分钟后）`;
+      if('Notification' in window && Notification.permission==='granted') new Notification('课程提醒', { body: msg });
+      else alert(`🔔 ${msg}`);
+      fired[key]=Date.now(); changed=true;
+    }
+  }
+  if(changed) setFiredMap(fired);
+}
 
 async function hydrateFromPublishedData(){
   if(Array.isArray(list)&&list.length>0) return;
@@ -132,8 +167,8 @@ async function githubPutFile(cfg,path,content,message){
   if(!r.ok){const t=await r.text(); throw new Error(t.slice(0,200));}
 }
 
-function clearForm(){ $('entryId').value=''; $('entryForm').reset(); $('saveBtn').textContent='新增'; $('day').value='周一'; $('type').value='课程'; }
-function fillForm(it){ ['entryId','title','day','type','start','end','location','note'].forEach(k=>$(k).value=it[k]||''); $('saveBtn').textContent='保存修改'; applyEditorCollapsed(false); window.scrollTo({top:0,behavior:'smooth'}); }
+function clearForm(){ $('entryId').value=''; $('entryForm').reset(); $('saveBtn').textContent='新增'; $('day').value='周一'; $('type').value='课程'; $('alarmOn').checked=true; }
+function fillForm(it){ ['entryId','title','day','type','start','end','location','note'].forEach(k=>$(k).value=it[k]||''); $('alarmOn').checked = it.alarmOn!==false; $('saveBtn').textContent='保存修改'; applyEditorCollapsed(false); window.scrollTo({top:0,behavior:'smooth'}); }
 
 function render(){
   const fd=$('filterDay').value;
@@ -142,7 +177,7 @@ function render(){
 
   for(const it of view){
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${it.day}</td><td><span class="pill">${it.start} - ${it.end}</span></td><td style="font-size:20px">${typeIcons[it.type]||'📌'}</td><td>${esc(it.title)}</td><td>${esc(it.type)}</td><td>${esc(it.location||'-')}</td><td>${esc(it.note||'-')}</td><td><div class="actions"><button class="btn-ghost" data-action="edit" data-id="${it.id}">编辑</button><button class="btn-danger" data-action="delete" data-id="${it.id}">删除</button></div></td>`;
+    tr.innerHTML=`<td>${it.day}</td><td><span class="pill">${it.start} - ${it.end}</span></td><td style="font-size:20px">${typeIcons[it.type]||'📌'}</td><td>${esc(it.title)}</td><td>${esc(it.type)}</td><td>${esc(it.location||'-')}</td><td>${esc(it.note||'-')}</td><td>${it.alarmOn===false?'关闭':'开启'}</td><td><div class="actions"><button class="btn-ghost" data-action="edit" data-id="${it.id}">编辑</button><button class="btn-danger" data-action="delete" data-id="${it.id}">删除</button></div></td>`;
     $('tbody').appendChild(tr);
   }
 
@@ -150,12 +185,12 @@ function render(){
   for(const day of days){
     const items=view.filter(x=>x.day===day);
     const col=document.createElement('div'); col.className='day-col';
-    col.innerHTML=`<h3>${day}<span class="muted">${items.length} 条</span></h3><div class="day-list">${items.length?items.map(it=>`<div class="tt-card"><div class="icon">${typeIcons[it.type]||'📌'}</div><div class="title">${esc(it.title)}</div><div class="meta">${esc(it.start)} - ${esc(it.end)}</div><div class="meta">${esc(it.type)} · ${esc(it.location||'-')}</div><div class="meta">${esc(it.note||'-')}</div><div class="card-actions"><button class="btn-ghost" data-action="edit" data-id="${it.id}">编辑</button><button class="btn-danger" data-action="delete" data-id="${it.id}">删除</button></div></div>`).join(''):'<div class="muted">暂无课程</div>'}</div>`;
+    col.innerHTML=`<h3>${day}<span class="muted">${items.length} 条</span></h3><div class="day-list">${items.length?items.map(it=>`<div class="tt-card"><div class="icon">${typeIcons[it.type]||'📌'}</div><div class="title">${esc(it.title)}</div><div class="meta">${esc(it.start)} - ${esc(it.end)}</div><div class="meta">${esc(it.type)} · ${esc(it.location||'-')}</div><div class="meta">闹铃：${it.alarmOn===false?'关':'开'}</div><div class="meta">${esc(it.note||'-')}</div><div class="card-actions"><button class="btn-ghost" data-action="edit" data-id="${it.id}">编辑</button><button class="btn-danger" data-action="delete" data-id="${it.id}">删除</button></div></div>`).join(''):'<div class="muted">暂无课程</div>'}</div>`;
     $('cardsGrid').appendChild(col);
   }
 }
 
-$('entryForm').addEventListener('submit',e=>{e.preventDefault(); const id=$('entryId').value.trim(); const it={id:id||uid(),title:$('title').value.trim(),day:$('day').value,type:$('type').value,start:$('start').value,end:$('end').value,location:$('location').value.trim(),note:$('note').value.trim()};
+$('entryForm').addEventListener('submit',e=>{e.preventDefault(); const id=$('entryId').value.trim(); const it={id:id||uid(),title:$('title').value.trim(),day:$('day').value,type:$('type').value,start:$('start').value,end:$('end').value,location:$('location').value.trim(),note:$('note').value.trim(),alarmOn:$('alarmOn').checked};
 if(!it.title||!it.start||!it.end) return alert('请填写完整信息'); if(it.start>=it.end) return alert('结束时间必须晚于开始时间'); if(id){const i=list.findIndex(x=>x.id===id); if(i>-1) list[i]=it;} else list.push(it); persist(); clearForm(); render();});
 $('resetBtn').addEventListener('click',clearForm); $('filterDay').addEventListener('change',render);
 
@@ -164,6 +199,7 @@ $('tbody').addEventListener('click',onAction); $('cardsGrid').addEventListener('
 
 $('clearAllBtn').addEventListener('click',()=>{ if(!list.length) return; if(!confirm('确定清空全部安排吗？此操作不可恢复。')) return; list=[]; persist(); clearForm(); render();});
 $('copyPrevDayBtn').addEventListener('click',()=>{ const target=$('filterDay').value; if(target==='全部') return alert('请先在筛选里选择目标星期'); const prev=dayOrder[(dayOrder.indexOf(target)+6)%7]; const src=sortList(list).filter(x=>x.day===prev); if(!src.length) return alert(`${prev} 没有可复制的课程`); const keys=new Set(list.filter(x=>x.day===target).map(x=>`${x.start}|${x.end}|${x.title}|${x.type}|${x.location||''}|${x.note||''}`)); let n=0; for(const s of src){const k=`${s.start}|${s.end}|${s.title}|${s.type}|${s.location||''}|${s.note||''}`; if(keys.has(k)) continue; list.push({...s,id:uid(),day:target}); keys.add(k); n++;} persist(); render(); alert(`已从 ${prev} 复制到 ${target}：新增 ${n} 条`);});
+$('toggleAlarmBtn').addEventListener('click',async()=>{ const next=!isAlarmEnabled(); if(next&&'Notification' in window&&Notification.permission==='default'){ try{await Notification.requestPermission();}catch{} } setAlarmEnabled(next); });
 
 function syncViewMode(){ $('tableWrap').classList.toggle('hidden',viewMode==='card'); $('cardsWrap').classList.toggle('hidden',viewMode!=='card'); $('toggleViewBtn').textContent=viewMode==='card'?'切换到表格模式':'切换到卡片模式'; }
 function toggle(){viewMode=viewMode==='table'?'card':'table'; syncViewMode();}
@@ -227,7 +263,9 @@ const collapsedSaved=localStorage.getItem(EDITOR_COLLAPSED_KEY);
 const defaultCollapsed = window.matchMedia('(max-width: 980px)').matches;
 applyEditorCollapsed(collapsedSaved===null ? defaultCollapsed : collapsedSaved==='1');
 syncViewMode();
-(async()=>{await hydrateFromPublishedData(); render();})();
+updateAlarmUI();
+setInterval(alarmTick,30000);
+(async()=>{await hydrateFromPublishedData(); render(); alarmTick();})();
 if('serviceWorker'in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body></html>

@@ -56,6 +56,8 @@
       </div>
       <div class="right">
         <button class="btn-ghost" id="copyPrevDayBtn" type="button">复制前一天</button>
+        <button class="btn-ghost" id="backupGithubBtn" type="button">备份到 GitHub</button>
+        <button class="btn-ghost" id="restoreGithubBtn" type="button">恢复最近备份</button>
         <button class="btn-ghost" id="forceRefreshBtn" type="button">强制更新</button>
         <button class="btn-ghost" id="toggleViewBtn" type="button">切换到卡片模式</button>
         <button class="btn-ghost" id="exportImageBtn" type="button">导出图片</button>
@@ -76,6 +78,7 @@
 
 <script>
 const STORAGE_KEY='pretty_timetable_v1';
+const GITHUB_CFG_KEY='timetable_github_cfg_v1';
 const dayOrder=['周一','周二','周三','周四','周五','周六','周日'];
 const typeIcons={课程:'📘',会议:'🧑‍💼',学习:'🧠',锻炼:'🏃',音乐:'🎵',舞蹈:'💃',其他:'🗂️'};
 const $=id=>document.getElementById(id);
@@ -90,6 +93,31 @@ function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').
 async function hydrateFromPublishedData(){
   if(Array.isArray(list)&&list.length>0) return;
   try{const r=await fetch('./data.json',{cache:'no-store'}); if(!r.ok) return; const d=await r.json(); if(Array.isArray(d)&&d.length){list=d;persist();}}catch{}
+}
+
+function getGithubCfg(){
+  try{return JSON.parse(localStorage.getItem(GITHUB_CFG_KEY)||'{}')}catch{return{}}
+}
+function setGithubCfg(cfg){ localStorage.setItem(GITHUB_CFG_KEY,JSON.stringify(cfg)); }
+function readGithubCfg(){
+  const old=getGithubCfg();
+  const owner=prompt('GitHub Owner（用户名）', old.owner||'jasonyangaccela'); if(owner===null) return null;
+  const repo=prompt('GitHub Repo（仓库名）', old.repo||'timetable'); if(repo===null) return null;
+  const branch=prompt('Branch（分支）', old.branch||'main'); if(branch===null) return null;
+  const token=prompt('GitHub PAT（需要 repo 权限）', old.token||''); if(!token) return null;
+  const cfg={owner:owner.trim(),repo:repo.trim(),branch:branch.trim(),token:token.trim()};
+  setGithubCfg(cfg);
+  return cfg;
+}
+async function githubPutFile(cfg,path,content,message){
+  const api=`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encodeURIComponent(path).replace(/%2F/g,'/')}`;
+  let sha;
+  const g=await fetch(`${api}?ref=${cfg.branch}`,{headers:{Authorization:`Bearer ${cfg.token}`,Accept:'application/vnd.github+json'}});
+  if(g.ok){const j=await g.json(); sha=j.sha;}
+  const body={message,content:btoa(unescape(encodeURIComponent(content))),branch:cfg.branch};
+  if(sha) body.sha=sha;
+  const r=await fetch(api,{method:'PUT',headers:{Authorization:`Bearer ${cfg.token}`,Accept:'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){const t=await r.text(); throw new Error(t.slice(0,200));}
 }
 
 function clearForm(){ $('entryId').value=''; $('entryForm').reset(); $('saveBtn').textContent='新增'; $('day').value='周一'; $('type').value='课程'; }
@@ -142,6 +170,32 @@ return c;}
 
 $('exportImageBtn').addEventListener('click',()=>{if(!list.length) return alert('没有可导出的数据'); const c=buildImage(); const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='timetable.png'; a.click();});
 $('shareImageBtn').addEventListener('click',async()=>{if(!list.length) return alert('没有可分享的数据'); if(!navigator.share) return alert('当前浏览器不支持直接分享，请先导出图片再发微信。'); const c=buildImage(); const blob=await new Promise(r=>c.toBlob(r,'image/png')); if(!blob) return; const file=new File([blob],'timetable.png',{type:'image/png'}); try{ if(navigator.canShare && !navigator.canShare({files:[file]})) throw new Error(); await navigator.share({files:[file],title:'课程表'});}catch(e){ if(e.name!=='AbortError') alert('当前环境不能直接拉起微信分享，请导出图片后发送。'); }});
+
+$('backupGithubBtn').addEventListener('click',async()=>{
+  if(!list.length) return alert('当前没有可备份的数据');
+  const cfg=readGithubCfg(); if(!cfg) return;
+  const now=new Date();
+  const stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+  const payload=JSON.stringify(list,null,2);
+  try{
+    await githubPutFile(cfg,`backups/timetable-${stamp}.json`,payload,`backup: ${stamp}`);
+    await githubPutFile(cfg,'backups/latest.json',payload,`backup latest: ${stamp}`);
+    await githubPutFile(cfg,'data.json',payload,`publish data: ${stamp}`);
+    alert('备份成功：已写入 backups/latest.json 和带时间戳备份');
+  }catch(e){ alert('备份失败：'+(e.message||e)); }
+});
+
+$('restoreGithubBtn').addEventListener('click',async()=>{
+  const cfg=readGithubCfg(); if(!cfg) return;
+  const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/latest.json?v=${Date.now()}`;
+  try{
+    const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error('未找到 latest.json');
+    const d=await r.json(); if(!Array.isArray(d)) throw new Error('备份格式不正确');
+    if(!confirm(`将覆盖本地数据，共 ${d.length} 条，确定继续吗？`)) return;
+    list=d; persist(); render();
+    alert('恢复成功：已从 GitHub latest 备份恢复');
+  }catch(e){ alert('恢复失败：'+(e.message||e)); }
+});
 
 $('forceRefreshBtn').addEventListener('click',async()=>{try{if('serviceWorker'in navigator){const rs=await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r=>r.unregister()));} if('caches'in window){const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k)));} alert('已清理缓存，正在强制更新…'); location.href=`${location.pathname}?v=${Date.now()}`;}catch{location.reload(true)}});
 

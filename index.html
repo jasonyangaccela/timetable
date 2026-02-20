@@ -14,6 +14,13 @@
     *{box-sizing:border-box} body{margin:0;padding:24px;font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:radial-gradient(1200px 800px at -10% -20%, #2b3f7f 0%, transparent 60%),radial-gradient(900px 700px at 120% 120%, #4a2c8a 0%, transparent 55%),var(--bg)}
     .container{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:340px 1fr;gap:16px}.panel{background:var(--card);border:1px solid rgba(255,255,255,.15);border-radius:14px;backdrop-filter:blur(8px)}
     .form{padding:16px;position:sticky;top:16px;height:fit-content}.sub{font-size:13px;color:var(--muted);margin-bottom:12px}
+    .editor-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+    .editor-head h2{margin:0}
+    .collapsed-editor .container{grid-template-columns:84px 1fr}
+    .collapsed-editor .form{padding:12px 10px}
+    .collapsed-editor .form #entryForm,.collapsed-editor .form .sub{display:none}
+    .collapsed-editor .editor-head{margin-bottom:0}
+    .collapsed-editor #toggleEditorBtn{writing-mode:vertical-rl;height:120px}
     label{display:block;font-size:13px;color:var(--muted);margin:8px 0 4px} input,select,textarea,button{font:inherit}
     input,select,textarea{width:100%;padding:9px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(10,12,24,.45);color:var(--text)} textarea{min-height:62px}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
@@ -33,7 +40,10 @@
 <body>
 <div class="container">
   <aside class="panel form">
-    <h2 style="margin:0">📅 Time Table</h2>
+    <div class="editor-head">
+      <h2>📅 Time Table</h2>
+      <button class="btn-ghost" id="toggleEditorBtn" type="button">收起编辑</button>
+    </div>
     <div class="sub">支持增删改查（本地自动保存）</div>
     <form id="entryForm">
       <input type="hidden" id="entryId" />
@@ -79,6 +89,7 @@
 <script>
 const STORAGE_KEY='pretty_timetable_v1';
 const GITHUB_CFG_KEY='timetable_github_cfg_v1';
+const EDITOR_COLLAPSED_KEY='timetable_editor_collapsed_v1';
 const dayOrder=['周一','周二','周三','周四','周五','周六','周日'];
 const typeIcons={课程:'📘',会议:'🧑‍💼',学习:'🧠',锻炼:'🏃',音乐:'🎵',舞蹈:'💃',其他:'🗂️'};
 const $=id=>document.getElementById(id);
@@ -200,7 +211,18 @@ $('restoreGithubBtn').addEventListener('click',async()=>{
 
 $('forceRefreshBtn').addEventListener('click',async()=>{try{if('serviceWorker'in navigator){const rs=await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r=>r.unregister()));} if('caches'in window){const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k)));} alert('已清理缓存，正在强制更新…'); location.href=`${location.pathname}?v=${Date.now()}`;}catch{location.reload(true)}});
 
+function applyEditorCollapsed(collapsed){
+  document.body.classList.toggle('collapsed-editor', !!collapsed);
+  $('toggleEditorBtn').textContent = collapsed ? '展开编辑' : '收起编辑';
+  localStorage.setItem(EDITOR_COLLAPSED_KEY, collapsed ? '1' : '0');
+}
+$('toggleEditorBtn').addEventListener('click',()=>{
+  const collapsed = !document.body.classList.contains('collapsed-editor');
+  applyEditorCollapsed(collapsed);
+});
+
 $('day').value='周一'; $('type').value='课程';
+applyEditorCollapsed(localStorage.getItem(EDITOR_COLLAPSED_KEY)==='1');
 (async()=>{await hydrateFromPublishedData(); render();})();
 if('serviceWorker'in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>

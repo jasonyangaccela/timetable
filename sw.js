@@ -1,5 +1,5 @@
-const CACHE_NAME = 'timetable-pwa-v1';
-const ASSETS = ['./timetable.html', './manifest.webmanifest', './icon.svg'];
+const CACHE_NAME = 'timetable-pwa-v2';
+const ASSETS = ['./index.html', './manifest.webmanifest', './icon.svg', './data.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));

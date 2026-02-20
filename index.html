@@ -458,6 +458,19 @@
       }
     }
 
+    async function hydrateFromPublishedData() {
+      if (Array.isArray(list) && list.length > 0) return;
+      try {
+        const res = await fetch('./data.json', { cache: 'no-store' });
+        if (!res.ok) return;
+        const remote = await res.json();
+        if (Array.isArray(remote) && remote.length > 0) {
+          list = remote;
+          persist();
+        }
+      } catch {}
+    }
+
     function persist() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     }
@@ -903,7 +916,11 @@
     $('day').value = '&#21608;&#19968;';
     $('type').value = '&#35838;&#31243;';
     setViewMode('table');
-    render();
+
+    (async () => {
+      await hydrateFromPublishedData();
+      render();
+    })();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

@@ -89,7 +89,7 @@
         <button class="btn-ghost" id="copyPrevDayBtn" type="button">复制前一天</button>
         <button class="btn-ghost" id="backupGithubBtn" type="button">备份到 GitHub</button>
         <button class="btn-ghost" id="restoreGithubBtn" type="button">恢复最近备份</button>
-        <button class="btn-ghost" id="forceRefreshBtn" type="button">强制更新</button>
+        <button class="btn-ghost" id="forceRefreshBtn" type="button">同步数据</button>
         <button class="btn-ghost" id="toggleViewBtn" type="button">切换到表格模式</button>
         <button class="btn-ghost" id="exportImageBtn" type="button">导出图片</button>
         <button class="btn-ghost" id="shareImageBtn" type="button">分享图片</button>
@@ -337,7 +337,22 @@ $('restoreGithubBtn').addEventListener('click',async()=>{
   catch(e){ alert('恢复失败：'+(e.message||e)); }
 });
 
-$('forceRefreshBtn').addEventListener('click',async()=>{ try{ if('serviceWorker' in navigator){ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); } if('caches' in window){ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); } alert('已清理缓存，正在强制更新…'); location.href=`${location.pathname}?v=${Date.now()}`; }catch{ location.reload(true); } });
+$('forceRefreshBtn').addEventListener('click',async()=>{
+  const cfg=readGithubCfg(); if(!cfg) return;
+  const now=new Date();
+  const stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+  try{
+    const payload=JSON.stringify(list,null,2);
+    await githubPutFile(cfg,`backups/${currentRole}-latest.json`,payload,`sync latest ${currentRole}: ${stamp}`);
+    await githubPutFile(cfg,`data-${currentRole}.json`,payload,`sync data ${currentRole}: ${stamp}`);
+    const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(currentRole)}-latest.json?v=${Date.now()}`;
+    const r=await fetch(url,{cache:'no-store'});
+    if(r.ok){ const d=await r.json(); if(Array.isArray(d)){ list=d; persist(); render(); } }
+    alert(`同步成功：${currentRole}`);
+  }catch(e){
+    alert('同步失败：'+(e.message||e));
+  }
+});
 
 (async function init(){
   migrateToJackson();

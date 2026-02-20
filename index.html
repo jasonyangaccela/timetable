@@ -62,14 +62,13 @@
 
   <main class="panel board">
     <div class="toolbar">
-      <div class="left"><span class="chip" id="countChip">共 0 条</span><span class="chip" id="alarmStateChip">闹铃：关</span>
+      <div class="left"><span class="chip" id="countChip">共 0 条</span>
         <select id="roleSelect" title="切换角色"></select>
         <button class="btn-ghost" id="addRoleBtn" type="button">+角色</button>
         <select id="filterDay"><option value="全部">全部星期</option><option>周一</option><option>周二</option><option>周三</option><option>周四</option><option>周五</option><option>周六</option><option>周日</option></select>
       </div>
       <div class="right">
         <button class="btn-ghost" id="copyPrevDayBtn" type="button">复制前一天</button>
-        <button class="btn-ghost" id="toggleAlarmBtn" type="button">打开闹铃</button>
         <button class="btn-ghost" id="backupGithubBtn" type="button">备份到 GitHub</button>
         <button class="btn-ghost" id="restoreGithubBtn" type="button">恢复最近备份</button>
         <button class="btn-ghost" id="forceRefreshBtn" type="button">强制更新</button>
@@ -96,7 +95,6 @@ const ROLE_LIST_KEY='timetable_roles_v1';
 const ROLE_ACTIVE_KEY='timetable_role_active_v1';
 const GITHUB_CFG_KEY='timetable_github_cfg_v1';
 const EDITOR_COLLAPSED_KEY='timetable_editor_collapsed_v1';
-const ALARM_MASTER_KEY='timetable_alarm_master_v1';
 const ALARM_FIRED_KEY='timetable_alarm_fired_v1';
 const dayOrder=['周一','周二','周三','周四','周五','周六','周日'];
 const typeIcons={课程:'📘',会议:'🧑‍💼',学习:'🧠',锻炼:'🏃',音乐:'🎵',舞蹈:'💃',其他:'🗂️'};
@@ -123,11 +121,8 @@ function switchRole(role){
   currentRole=role; localStorage.setItem(ROLE_ACTIVE_KEY, role);
   list=load(); renderRoles(); render();
 }
-function isAlarmEnabled(){ return localStorage.getItem(ALARM_MASTER_KEY)==='1'; }
-function setAlarmEnabled(v){ localStorage.setItem(ALARM_MASTER_KEY, v?'1':'0'); updateAlarmUI(); }
 function getFiredMap(){ try{return JSON.parse(localStorage.getItem(ALARM_FIRED_KEY)||'{}')}catch{return{}} }
 function setFiredMap(m){ localStorage.setItem(ALARM_FIRED_KEY, JSON.stringify(m)); }
-function updateAlarmUI(){ const on=isAlarmEnabled(); $('alarmStateChip').textContent=`闹铃：${on?'开':'关'}`; $('toggleAlarmBtn').textContent=on?'关闭闹铃':'打开闹铃'; }
 function getNextOccurrence(item, now=new Date()){
   const dayMap={'周日':0,'周一':1,'周二':2,'周三':3,'周四':4,'周五':5,'周六':6};
   const t=(item.start||'00:00').split(':'); const hh=Number(t[0]||0), mm=Number(t[1]||0);
@@ -138,7 +133,7 @@ function getNextOccurrence(item, now=new Date()){
   return d;
 }
 function alarmTick(){
-  if(!isAlarmEnabled()||!Array.isArray(list)||!list.length) return;
+  if(!Array.isArray(list)||!list.length) return;
   const now=new Date(); const fired=getFiredMap(); let changed=false;
   for(const item of list){
     if(item.alarmOn===false) continue;
@@ -210,7 +205,9 @@ function render(){
 }
 
 $('entryForm').addEventListener('submit',e=>{e.preventDefault(); const id=$('entryId').value.trim(); const it={id:id||uid(),title:$('title').value.trim(),day:$('day').value,type:$('type').value,start:$('start').value,end:$('end').value,location:$('location').value.trim(),note:$('note').value.trim(),alarmOn:$('alarmOn').checked};
-if(!it.title||!it.start||!it.end) return alert('请填写完整信息'); if(it.start>=it.end) return alert('结束时间必须晚于开始时间'); if(id){const i=list.findIndex(x=>x.id===id); if(i>-1) list[i]=it;} else list.push(it); persist(); clearForm(); render();});
+if(!it.title||!it.start||!it.end) return alert('请填写完整信息'); if(it.start>=it.end) return alert('结束时间必须晚于开始时间');
+if(it.alarmOn!==false && 'Notification' in window && Notification.permission==='default'){ Notification.requestPermission().catch(()=>{}); }
+if(id){const i=list.findIndex(x=>x.id===id); if(i>-1) list[i]=it;} else list.push(it); persist(); clearForm(); render();});
 $('resetBtn').addEventListener('click',clearForm); $('filterDay').addEventListener('change',render);
 $('roleSelect').addEventListener('change',e=>switchRole(e.target.value));
 $('addRoleBtn').addEventListener('click',()=>{ const name=(prompt('新角色名称')||'').trim(); if(!name) return; const roles=getRoles(); if(!roles.includes(name)) roles.push(name); setRoles(roles); switchRole(name); });
@@ -220,7 +217,6 @@ $('tbody').addEventListener('click',onAction); $('cardsGrid').addEventListener('
 
 $('clearAllBtn').addEventListener('click',()=>{ if(!list.length) return; if(!confirm('确定清空全部安排吗？此操作不可恢复。')) return; list=[]; persist(); clearForm(); render();});
 $('copyPrevDayBtn').addEventListener('click',()=>{ const target=$('filterDay').value; if(target==='全部') return alert('请先在筛选里选择目标星期'); const prev=dayOrder[(dayOrder.indexOf(target)+6)%7]; const src=sortList(list).filter(x=>x.day===prev); if(!src.length) return alert(`${prev} 没有可复制的课程`); const keys=new Set(list.filter(x=>x.day===target).map(x=>`${x.start}|${x.end}|${x.title}|${x.type}|${x.location||''}|${x.note||''}`)); let n=0; for(const s of src){const k=`${s.start}|${s.end}|${s.title}|${s.type}|${s.location||''}|${s.note||''}`; if(keys.has(k)) continue; list.push({...s,id:uid(),day:target}); keys.add(k); n++;} persist(); render(); alert(`已从 ${prev} 复制到 ${target}：新增 ${n} 条`);});
-$('toggleAlarmBtn').addEventListener('click',async()=>{ const next=!isAlarmEnabled(); if(next&&'Notification' in window&&Notification.permission==='default'){ try{await Notification.requestPermission();}catch{} } setAlarmEnabled(next); });
 
 function syncViewMode(){ $('tableWrap').classList.toggle('hidden',viewMode==='card'); $('cardsWrap').classList.toggle('hidden',viewMode!=='card'); $('toggleViewBtn').textContent=viewMode==='card'?'切换到表格模式':'切换到卡片模式'; }
 function toggle(){viewMode=viewMode==='table'?'card':'table'; syncViewMode();}
@@ -289,7 +285,6 @@ const collapsedSaved=localStorage.getItem(EDITOR_COLLAPSED_KEY);
 const defaultCollapsed = window.matchMedia('(max-width: 980px)').matches;
 applyEditorCollapsed(collapsedSaved===null ? defaultCollapsed : collapsedSaved==='1');
 syncViewMode();
-updateAlarmUI();
 setInterval(alarmTick,30000);
 (async()=>{await hydrateFromPublishedData(); render(); alarmTick();})();
 if('serviceWorker'in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));

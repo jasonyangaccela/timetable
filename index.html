@@ -422,18 +422,25 @@ $('forceRefreshBtn').addEventListener('click',async()=>{
   const now=new Date();
   const stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
   const run=async()=>{
-    const payload=JSON.stringify(list,null,2);
-    await githubPutFile(cfg,`backups/${currentRole}-latest.json`,payload,`sync latest ${currentRole}: ${stamp}`);
-    await githubPutFile(cfg,`data-${currentRole}.json`,payload,`sync data ${currentRole}: ${stamp}`);
-    const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(currentRole)}-latest.json?v=${Date.now()}`;
-    const r=await fetch(url,{cache:'no-store'});
-    if(r.ok){ const d=await r.json(); if(Array.isArray(d)){ list=d; persist(); render(); } }
+    const roles=getRoles();
+    for(const role of roles){
+      const roleData=loadRole(role);
+      const payload=JSON.stringify(roleData,null,2);
+      await githubPutFile(cfg,`backups/${role}-latest.json`,payload,`sync latest ${role}: ${stamp}`);
+      await githubPutFile(cfg,`data-${role}.json`,payload,`sync data ${role}: ${stamp}`);
+    }
+    // 额外同步一份通用 data.json 给 Jackson 兼容
+    const jacksonData=loadRole('Jackson');
+    if(Array.isArray(jacksonData)&&jacksonData.length){
+      await githubPutFile(cfg,'data.json',JSON.stringify(jacksonData,null,2),`sync data Jackson(shared): ${stamp}`);
+    }
+    await pullLatestForRole(true);
   };
-  try{ await run(); alert(`同步成功：${currentRole}`); }
+  try{ await run(); alert('同步成功：全部角色已同步'); }
   catch(e){
     if((e.message||'').includes('AUTH_401')){
       cfg=readGithubCfg(true); if(!cfg) return;
-      try{ await run(); alert(`同步成功：${currentRole}`); return; }catch(err){ alert('同步失败：鉴权无效，请检查PAT权限(repo)'); return; }
+      try{ await run(); alert('同步成功：全部角色已同步'); return; }catch(err){ alert('同步失败：鉴权无效，请检查PAT权限(repo)'); return; }
     }
     alert('同步失败：'+(e.message||e));
   }

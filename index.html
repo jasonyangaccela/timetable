@@ -290,12 +290,20 @@ function getPublicRepoCfg(){
 }
 async function pullLatestForRole(silent=true){
   const cfg=getPublicRepoCfg();
-  const url=`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(currentRole)}-latest.json?v=${Date.now()}`;
+  const urls=[
+    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(currentRole)}-latest.json?v=${Date.now()}`,
+    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/data-${encodeURIComponent(currentRole)}.json?v=${Date.now()}`,
+    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/data.json?v=${Date.now()}`
+  ];
   try{
-    const r=await fetch(url,{cache:'no-store'});
-    if(!r.ok) return;
-    const d=await r.json();
-    if(!Array.isArray(d)) return;
+    let d=null;
+    for(const url of urls){
+      const r=await fetch(url,{cache:'no-store'});
+      if(!r.ok) continue;
+      const j=await r.json();
+      if(Array.isArray(j)){ d=j; break; }
+    }
+    if(!d) return;
     if(JSON.stringify(d)!==JSON.stringify(list)){
       list=d; persist(); render();
       if(!silent) alert(`已从云端同步：${currentRole}`);

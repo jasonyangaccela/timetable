@@ -30,6 +30,8 @@
     .board{padding:12px}
     .toolbar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
     .left,.right{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .inline-group{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
+    #filterDay{width:auto;min-width:108px;max-width:130px}
     .chip{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.15)}
     button,input,select,textarea{font:inherit}
     button{border:0;padding:9px 10px;border-radius:10px;color:#fff;cursor:pointer}
@@ -85,10 +87,12 @@
       <div class="left">
         <span class="chip" id="countChip">共 0 条</span>
         <span class="chip" id="roleChip">当前角色：-</span>
-        <select id="filterDay"><option value="全部">全部星期</option><option>周一</option><option>周二</option><option>周三</option><option>周四</option><option>周五</option><option>周六</option><option>周日</option></select>
+        <div class="inline-group">
+          <select id="filterDay"><option value="全部">全部星期</option><option>周一</option><option>周二</option><option>周三</option><option>周四</option><option>周五</option><option>周六</option><option>周日</option></select>
+          <button class="btn-primary" id="openEditorBtn" type="button">+ 新建课程</button>
+        </div>
       </div>
       <div class="right">
-        <button class="btn-primary" id="openEditorBtn" type="button">+ 新建课程</button>
         <button class="btn-ghost" id="copyPrevDayBtn" type="button">复制前一天</button>
         <button class="btn-ghost" id="toggleViewBtn" type="button">切换到表格模式</button>
         <button class="btn-ghost" id="exportImageBtn" type="button">导出图片</button>

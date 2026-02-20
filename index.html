@@ -101,10 +101,11 @@ function getGithubCfg(){
 function setGithubCfg(cfg){ localStorage.setItem(GITHUB_CFG_KEY,JSON.stringify(cfg)); }
 function readGithubCfg(){
   const old=getGithubCfg();
+  if(old.owner&&old.repo&&old.branch&&old.token) return old;
   const owner=prompt('GitHub Owner（用户名）', old.owner||'jasonyangaccela'); if(owner===null) return null;
   const repo=prompt('GitHub Repo（仓库名）', old.repo||'timetable'); if(repo===null) return null;
   const branch=prompt('Branch（分支）', old.branch||'main'); if(branch===null) return null;
-  const token=prompt('GitHub PAT（需要 repo 权限）', old.token||''); if(!token) return null;
+  const token=prompt('GitHub PAT（仅首次输入，后续自动保存）', old.token||''); if(!token) return null;
   const cfg={owner:owner.trim(),repo:repo.trim(),branch:branch.trim(),token:token.trim()};
   setGithubCfg(cfg);
   return cfg;

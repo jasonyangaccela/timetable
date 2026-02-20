@@ -85,17 +85,18 @@
       <div class="left">
         <span class="chip" id="countChip">共 0 条</span>
         <span class="chip" id="roleChip">当前角色：-</span>
-        <select id="filterDay"><option value="全部">全部星期</option><option>周一</option><option>周二</option><option>周三</option><option>周四</option><option>周五</option><option>周六</option><option>周日</option></select><button class="btn-primary" id="openEditorBtn" type="button">+ 新建课程</button>
+        <select id="filterDay"><option value="全部">全部星期</option><option>周一</option><option>周二</option><option>周三</option><option>周四</option><option>周五</option><option>周六</option><option>周日</option></select>
       </div>
       <div class="right">
+        <button class="btn-primary" id="openEditorBtn" type="button">+ 新建课程</button>
         <button class="btn-ghost" id="copyPrevDayBtn" type="button">复制前一天</button>
-        <button class="btn-ghost" id="forceRefreshBtn" type="button">同步数据</button>
         <button class="btn-ghost" id="toggleViewBtn" type="button">切换到表格模式</button>
         <button class="btn-ghost" id="exportImageBtn" type="button">导出图片</button>
         <button class="btn-ghost" id="shareImageBtn" type="button">分享图片</button>
         <button class="btn-ghost" id="exportCsvBtn" type="button">导出 CSV</button>
         <button class="btn-ghost" id="exportExcelBtn" type="button">导出 Excel</button>
         <button class="btn-ghost" id="backupGithubBtn" type="button">备份到 GitHub</button>
+        <button class="btn-ghost" id="forceRefreshBtn" type="button">同步数据</button>
         <button class="btn-ghost" id="restoreGithubBtn" type="button">恢复最近备份</button>
       </div>
     </div>
@@ -104,7 +105,7 @@
 
     <div id="tableWrap" class="table-wrap hidden"><table><thead><tr><th>星期</th><th>时间</th><th>图标</th><th>事项</th><th>类型</th><th>地点</th><th>备注</th><th>闹铃</th><th>操作</th></tr></thead><tbody id="tbody"></tbody></table></div>
     <div id="cardsWrap" class="cards-wrap"><div id="cardsGrid" class="cards-grid"></div></div>
-    <div id="empty" class="empty">还没有安排，先点左侧“新建课程”吧 ✨</div>
+    <div id="empty" class="empty">还没有安排，先点上方“新建课程”吧 ✨</div>
   </main>
 </div>
 

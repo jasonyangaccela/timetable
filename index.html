@@ -384,6 +384,7 @@
         </div>
         <div class="right">
           <button class="btn-ghost" id="copyPrevDayBtn" type="button">复制前一天</button>
+          <button class="btn-ghost" id="forceRefreshBtn" type="button">强制更新</button>
           <button class="btn-ghost" id="toggleViewBtn" type="button">切换到卡片模式</button>
           <button class="btn-ghost" id="exportImageBtn" type="button">导出图片</button>
           <button class="btn-ghost" id="shareImageBtn" type="button">分享图片</button>
@@ -861,7 +862,25 @@
       alert(`已从 ${prevDay} 复制到 ${targetDay}：新增 ${added} 条`);
     }
 
+    async function forceRefreshApp() {
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        alert('已清理缓存，正在强制更新…');
+        location.href = `${location.pathname}?v=${Date.now()}`;
+      } catch {
+        location.reload(true);
+      }
+    }
+
     $('copyPrevDayBtn').addEventListener('click', copyFromPreviousDay);
+    $('forceRefreshBtn').addEventListener('click', forceRefreshApp);
     $('exportImageBtn').addEventListener('click', exportImage);
     $('shareImageBtn').addEventListener('click', shareImage);
     $('exportCsvBtn').addEventListener('click', exportCSV);

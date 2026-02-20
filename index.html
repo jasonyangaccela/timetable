@@ -181,7 +181,7 @@ function switchRole(role){
 function openEditor(){ $('editorModal').classList.add('show'); }
 function closeEditor(){ $('editorModal').classList.remove('show'); }
 function clearForm(){ $('entryId').value=''; $('entryForm').reset(); $('saveBtn').textContent='保存'; $('day').value='周一'; $('type').value='课程'; $('alarmOn').checked=false; }
-function fillForm(it){ ['entryId','title','day','type','start','end','location','note'].forEach(k=>$(k).value=it[k]||''); $('alarmOn').checked=it.alarmOn!==false; $('saveBtn').textContent='保存修改'; openEditor(); }
+function fillForm(it){ $('entryId').value=it.id||''; ['title','day','type','start','end','location','note'].forEach(k=>$(k).value=it[k]||''); $('alarmOn').checked=it.alarmOn!==false; $('saveBtn').textContent='保存修改'; openEditor(); }
 
 function render(){
   const fd=$('filterDay').value;

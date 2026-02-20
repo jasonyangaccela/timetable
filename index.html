@@ -23,8 +23,10 @@
     .container.roles-collapsed .roles h3,.container.roles-collapsed #addRoleBtn,.container.roles-collapsed #openEditorBtn{display:none}
     .container.roles-collapsed .role-btn{padding:8px 4px;text-align:center}
     .role-buttons{display:grid;gap:8px}
+    .role-item{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center}
     .role-btn{border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;padding:8px 10px;border-radius:10px;text-align:left;cursor:pointer}
     .role-btn.active{background:linear-gradient(135deg,var(--primary),var(--accent));border-color:transparent}
+    .role-mini{padding:8px 9px;border-radius:10px;background:rgba(255,255,255,.12)}
     .board{padding:12px}
     .toolbar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
     .left,.right{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -75,8 +77,6 @@
     </div>
     <div id="roleButtons" class="role-buttons"></div>
     <button class="btn-ghost" id="addRoleBtn" type="button" style="margin-top:10px;width:100%">+ 新增角色</button>
-    <button class="btn-ghost" id="renameRoleBtn" type="button" style="margin-top:8px;width:100%">✏️ 重命名角色</button>
-    <button class="btn-danger" id="deleteRoleBtn" type="button" style="margin-top:8px;width:100%">🗑️ 删除角色</button>
     <button class="btn-primary" id="openEditorBtn" type="button" style="margin-top:8px;width:100%">+ 新建课程</button>
   </aside>
 
@@ -188,7 +188,7 @@ function applyRolesCollapsed(v){
 function renderRoles(){
   const roles=getRoles();
   const collapsed=document.querySelector('.container').classList.contains('roles-collapsed');
-  $('roleButtons').innerHTML=roles.map(r=>`<button class="role-btn ${r===currentRole?'active':''}" data-role="${esc(r)}" title="${esc(r)}">${collapsed?esc(r).slice(0,1):esc(r)}</button>`).join('');
+  $('roleButtons').innerHTML=roles.map(r=>`<div class="role-item"><button class="role-btn ${r===currentRole?'active':''}" data-action="switch" data-role="${esc(r)}" title="${esc(r)}">${collapsed?esc(r).slice(0,1):esc(r)}</button><button class="role-mini" data-action="rename" data-role="${esc(r)}" title="重命名">✏️</button><button class="role-mini" data-action="delete" data-role="${esc(r)}" title="删除">🗑️</button></div>`).join('');
   $('roleChip').textContent=`当前角色：${currentRole}`;
 }
 function switchRole(role){
@@ -293,32 +293,36 @@ $('entryForm').addEventListener('submit',e=>{
 $('resetBtn').addEventListener('click',clearForm);
 $('filterDay').addEventListener('change',render);
 
-$('roleButtons').addEventListener('click',e=>{ const b=e.target.closest('.role-btn'); if(!b) return; switchRole(b.dataset.role); });
+$('roleButtons').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-action]'); if(!b) return;
+  const role=b.dataset.role, action=b.dataset.action;
+  if(action==='switch'){ switchRole(role); return; }
+  if(action==='rename'){
+    const newName=(prompt('新的角色名称', role)||'').trim();
+    if(!newName||newName===role) return;
+    const roles=getRoles();
+    if(roles.includes(newName)) return alert('该角色名已存在');
+    const idx=roles.indexOf(role); if(idx===-1) return;
+    const oldData=loadRole(role);
+    roles[idx]=newName;
+    setRoles(roles);
+    localStorage.setItem(roleStorageKey(newName), JSON.stringify(oldData));
+    localStorage.removeItem(roleStorageKey(role));
+    if(currentRole===role) switchRole(newName); else renderRoles();
+    return;
+  }
+  if(action==='delete'){
+    const roles=getRoles();
+    if(roles.length<=1) return alert('至少保留一个角色');
+    if(!confirm(`确定删除角色「${role}」吗？该角色课程会一并删除。`)) return;
+    const nextRoles=roles.filter(r=>r!==role);
+    localStorage.removeItem(roleStorageKey(role));
+    setRoles(nextRoles);
+    if(currentRole===role) switchRole(nextRoles[0]); else renderRoles();
+  }
+});
 $('toggleRolesBtn').addEventListener('click',()=>{ const c=document.querySelector('.container'); applyRolesCollapsed(!c.classList.contains('roles-collapsed')); renderRoles(); });
 $('addRoleBtn').addEventListener('click',()=>{ const name=(prompt('新角色名称')||'').trim(); if(!name) return; const roles=getRoles(); if(!roles.includes(name)) roles.push(name); setRoles(roles); switchRole(name); });
-$('renameRoleBtn').addEventListener('click',()=>{
-  const oldName=currentRole;
-  const newName=(prompt('新的角色名称', oldName)||'').trim();
-  if(!newName||newName===oldName) return;
-  const roles=getRoles();
-  if(roles.includes(newName)) return alert('该角色名已存在');
-  const idx=roles.indexOf(oldName); if(idx===-1) return;
-  const oldData=loadRole(oldName);
-  roles[idx]=newName;
-  setRoles(roles);
-  localStorage.setItem(roleStorageKey(newName), JSON.stringify(oldData));
-  localStorage.removeItem(roleStorageKey(oldName));
-  switchRole(newName);
-});
-$('deleteRoleBtn').addEventListener('click',()=>{
-  const roles=getRoles();
-  if(roles.length<=1) return alert('至少保留一个角色');
-  if(!confirm(`确定删除角色「${currentRole}」吗？该角色课程会一并删除。`)) return;
-  const nextRoles=roles.filter(r=>r!==currentRole);
-  localStorage.removeItem(roleStorageKey(currentRole));
-  setRoles(nextRoles);
-  switchRole(nextRoles[0]);
-});
 
 function onAction(e){ const b=e.target.closest('button'); if(!b) return; const id=b.dataset.id, act=b.dataset.action, it=list.find(x=>x.id===id); if(!it) return; if(act==='edit') fillForm(it); if(act==='delete'){ if(!confirm(`确定删除「${it.title}」吗？`)) return; list=list.filter(x=>x.id!==id); persist(); render(); } }
 $('tbody').addEventListener('click',onAction); $('cardsGrid').addEventListener('click',onAction);

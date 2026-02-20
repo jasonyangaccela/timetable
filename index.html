@@ -93,7 +93,7 @@ const EDITOR_COLLAPSED_KEY='timetable_editor_collapsed_v1';
 const dayOrder=['周一','周二','周三','周四','周五','周六','周日'];
 const typeIcons={课程:'📘',会议:'🧑‍💼',学习:'🧠',锻炼:'🏃',音乐:'🎵',舞蹈:'💃',其他:'🗂️'};
 const $=id=>document.getElementById(id);
-let list=load(),viewMode='table';
+let list=load(),viewMode='card';
 
 function load(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{return[]}}
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify(list))}
@@ -165,7 +165,8 @@ $('tbody').addEventListener('click',onAction); $('cardsGrid').addEventListener('
 $('clearAllBtn').addEventListener('click',()=>{ if(!list.length) return; if(!confirm('确定清空全部安排吗？此操作不可恢复。')) return; list=[]; persist(); clearForm(); render();});
 $('copyPrevDayBtn').addEventListener('click',()=>{ const target=$('filterDay').value; if(target==='全部') return alert('请先在筛选里选择目标星期'); const prev=dayOrder[(dayOrder.indexOf(target)+6)%7]; const src=sortList(list).filter(x=>x.day===prev); if(!src.length) return alert(`${prev} 没有可复制的课程`); const keys=new Set(list.filter(x=>x.day===target).map(x=>`${x.start}|${x.end}|${x.title}|${x.type}|${x.location||''}|${x.note||''}`)); let n=0; for(const s of src){const k=`${s.start}|${s.end}|${s.title}|${s.type}|${s.location||''}|${s.note||''}`; if(keys.has(k)) continue; list.push({...s,id:uid(),day:target}); keys.add(k); n++;} persist(); render(); alert(`已从 ${prev} 复制到 ${target}：新增 ${n} 条`);});
 
-function toggle(){viewMode=viewMode==='table'?'card':'table'; $('tableWrap').classList.toggle('hidden',viewMode==='card'); $('cardsWrap').classList.toggle('hidden',viewMode!=='card'); $('toggleViewBtn').textContent=viewMode==='card'?'切换到表格模式':'切换到卡片模式'}
+function syncViewMode(){ $('tableWrap').classList.toggle('hidden',viewMode==='card'); $('cardsWrap').classList.toggle('hidden',viewMode!=='card'); $('toggleViewBtn').textContent=viewMode==='card'?'切换到表格模式':'切换到卡片模式'; }
+function toggle(){viewMode=viewMode==='table'?'card':'table'; syncViewMode();}
 $('toggleViewBtn').addEventListener('click',toggle);
 
 function rows(){return sortList(list).map(i=>[i.day,`${i.start} - ${i.end}`,i.title,i.type,i.location||'',i.note||''])}
@@ -222,7 +223,10 @@ $('toggleEditorBtn').addEventListener('click',()=>{
 });
 
 $('day').value='周一'; $('type').value='课程';
-applyEditorCollapsed(localStorage.getItem(EDITOR_COLLAPSED_KEY)==='1');
+const collapsedSaved=localStorage.getItem(EDITOR_COLLAPSED_KEY);
+const defaultCollapsed = window.matchMedia('(max-width: 980px)').matches;
+applyEditorCollapsed(collapsedSaved===null ? defaultCollapsed : collapsedSaved==='1');
+syncViewMode();
 (async()=>{await hydrateFromPublishedData(); render();})();
 if('serviceWorker'in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>

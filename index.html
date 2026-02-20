@@ -401,7 +401,6 @@ $('forceRefreshBtn').addEventListener('click',async()=>{
 
 (async function init(){
   migrateToJackson();
-  closeAllExistingAlarms();
   const roles=getRoles();
   const saved=localStorage.getItem(ROLE_ACTIVE_KEY);
   currentRole=(saved&&roles.includes(saved))?saved:(roles[0]||'Jackson');

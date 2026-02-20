@@ -290,19 +290,25 @@ function getPublicRepoCfg(){
 }
 async function pullLatestForRole(silent=true){
   const cfg=getPublicRepoCfg();
-  const urls=[
+  const roleUrls=[
     `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/backups/${encodeURIComponent(currentRole)}-latest.json?v=${Date.now()}`,
-    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/data-${encodeURIComponent(currentRole)}.json?v=${Date.now()}`,
-    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/data.json?v=${Date.now()}`
+    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/data-${encodeURIComponent(currentRole)}.json?v=${Date.now()}`
   ];
   try{
     let d=null;
-    for(const url of urls){
+    for(const url of roleUrls){
       const r=await fetch(url,{cache:'no-store'});
       if(!r.ok) continue;
       const j=await r.json();
       if(Array.isArray(j)){ d=j; break; }
     }
+
+    // 仅 Jackson 允许用通用 data.json 兜底，避免把一个人的数据灌到其他角色
+    if(!d && currentRole==='Jackson'){
+      const r=await fetch(`https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/data.json?v=${Date.now()}`,{cache:'no-store'});
+      if(r.ok){ const j=await r.json(); if(Array.isArray(j)) d=j; }
+    }
+
     if(!d) return;
     if(JSON.stringify(d)!==JSON.stringify(list)){
       list=d; persist(); render();

@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Time Table" />
   <link rel="manifest" href="./manifest.webmanifest" />
-  <title>Time Table · 课程/日程管理</title>
+  <title>Time Table &#183; &#35838;&#31243;/&#26085;&#31243;&#31649;&#29702;</title>
   <style>
     :root {
       --bg: #0f1220;
@@ -307,62 +307,62 @@
 <body>
   <div class="container">
     <aside class="panel form-panel">
-      <h1>📅 Time Table</h1>
-      <div class="sub">支持增删改查（本地自动保存）</div>
+      <h1>&#128197; Time Table</h1>
+      <div class="sub">&#25903;&#25345;&#22686;&#21024;&#25913;&#26597;&#65288;&#26412;&#22320;&#33258;&#21160;&#20445;&#23384;&#65289;</div>
 
       <form id="entryForm">
         <input type="hidden" id="entryId" />
 
-        <label for="title">课程 / 事项</label>
-        <input id="title" required placeholder="例如：数学 / 项目晨会" />
+        <label for="title">&#35838;&#31243; / &#20107;&#39033;</label>
+        <input id="title" required placeholder="&#20363;&#22914;&#65306;&#25968;&#23398; / &#39033;&#30446;&#26216;&#20250;" />
 
         <div class="row">
           <div>
-            <label for="day">星期</label>
+            <label for="day">&#26143;&#26399;</label>
             <select id="day" required>
-              <option value="周一">周一</option>
-              <option value="周二">周二</option>
-              <option value="周三">周三</option>
-              <option value="周四">周四</option>
-              <option value="周五">周五</option>
-              <option value="周六">周六</option>
-              <option value="周日">周日</option>
+              <option value="&#21608;&#19968;">&#21608;&#19968;</option>
+              <option value="&#21608;&#20108;">&#21608;&#20108;</option>
+              <option value="&#21608;&#19977;">&#21608;&#19977;</option>
+              <option value="&#21608;&#22235;">&#21608;&#22235;</option>
+              <option value="&#21608;&#20116;">&#21608;&#20116;</option>
+              <option value="&#21608;&#20845;">&#21608;&#20845;</option>
+              <option value="&#21608;&#26085;">&#21608;&#26085;</option>
             </select>
           </div>
           <div>
-            <label for="type">类型</label>
+            <label for="type">&#31867;&#22411;</label>
             <select id="type" required>
-              <option value="课程">课程</option>
-              <option value="会议">会议</option>
-              <option value="学习">学习</option>
-              <option value="锻炼">锻炼</option>
-              <option value="音乐">音乐</option>
-              <option value="舞蹈">舞蹈</option>
-              <option value="其他">其他</option>
+              <option value="&#35838;&#31243;">&#35838;&#31243;</option>
+              <option value="&#20250;&#35758;">&#20250;&#35758;</option>
+              <option value="&#23398;&#20064;">&#23398;&#20064;</option>
+              <option value="&#38203;&#28860;">&#38203;&#28860;</option>
+              <option value="&#38899;&#20048;">&#38899;&#20048;</option>
+              <option value="&#33310;&#36424;">&#33310;&#36424;</option>
+              <option value="&#20854;&#20182;">&#20854;&#20182;</option>
             </select>
           </div>
         </div>
 
         <div class="row">
           <div>
-            <label for="start">开始时间</label>
+            <label for="start">&#24320;&#22987;&#26102;&#38388;</label>
             <input id="start" type="time" required />
           </div>
           <div>
-            <label for="end">结束时间</label>
+            <label for="end">&#32467;&#26463;&#26102;&#38388;</label>
             <input id="end" type="time" required />
           </div>
         </div>
 
-        <label for="location">地点</label>
-        <input id="location" placeholder="例如：A-302 / Zoom" />
+        <label for="location">&#22320;&#28857;</label>
+        <input id="location" placeholder="&#20363;&#22914;&#65306;A-302 / Zoom" />
 
-        <label for="note">备注</label>
-        <textarea id="note" placeholder="可选"></textarea>
+        <label for="note">&#22791;&#27880;</label>
+        <textarea id="note" placeholder="&#21487;&#36873;"></textarea>
 
         <div class="btn-row">
-          <button class="btn-primary" type="submit" id="saveBtn">新增</button>
-          <button class="btn-ghost" type="button" id="resetBtn">清空</button>
+          <button class="btn-primary" type="submit" id="saveBtn">&#26032;&#22686;</button>
+          <button class="btn-ghost" type="button" id="resetBtn">&#28165;&#31354;</button>
         </div>
       </form>
     </aside>
@@ -370,43 +370,43 @@
     <main class="panel board">
       <div class="toolbar">
         <div class="left">
-          <span class="chip" id="countChip">共 0 条</span>
-          <select id="filterDay" title="按星期筛选">
-            <option value="全部">全部星期</option>
-            <option value="周一">周一</option>
-            <option value="周二">周二</option>
-            <option value="周三">周三</option>
-            <option value="周四">周四</option>
-            <option value="周五">周五</option>
-            <option value="周六">周六</option>
-            <option value="周日">周日</option>
+          <span class="chip" id="countChip">&#20849; 0 &#26465;</span>
+          <select id="filterDay" title="&#25353;&#26143;&#26399;&#31579;&#36873;">
+            <option value="&#20840;&#37096;">&#20840;&#37096;&#26143;&#26399;</option>
+            <option value="&#21608;&#19968;">&#21608;&#19968;</option>
+            <option value="&#21608;&#20108;">&#21608;&#20108;</option>
+            <option value="&#21608;&#19977;">&#21608;&#19977;</option>
+            <option value="&#21608;&#22235;">&#21608;&#22235;</option>
+            <option value="&#21608;&#20116;">&#21608;&#20116;</option>
+            <option value="&#21608;&#20845;">&#21608;&#20845;</option>
+            <option value="&#21608;&#26085;">&#21608;&#26085;</option>
           </select>
         </div>
         <div class="right">
-          <button class="btn-ghost" id="copyPrevDayBtn" type="button">复制前一天</button>
-          <button class="btn-ghost" id="toggleViewBtn" type="button">切换到卡片模式</button>
-          <button class="btn-ghost" id="exportImageBtn" type="button">导出图片</button>
-          <button class="btn-ghost" id="shareImageBtn" type="button">分享图片</button>
-          <button class="btn-ghost" id="exportCsvBtn" type="button">导出 CSV</button>
-          <button class="btn-ghost" id="exportExcelBtn" type="button">导出 Excel</button>
-          <button class="btn-danger" id="clearAllBtn" type="button">清空全部</button>
+          <button class="btn-ghost" id="copyPrevDayBtn" type="button">&#22797;&#21046;&#21069;&#19968;&#22825;</button>
+          <button class="btn-ghost" id="toggleViewBtn" type="button">&#20999;&#25442;&#21040;&#21345;&#29255;&#27169;&#24335;</button>
+          <button class="btn-ghost" id="exportImageBtn" type="button">&#23548;&#20986;&#22270;&#29255;</button>
+          <button class="btn-ghost" id="shareImageBtn" type="button">&#20998;&#20139;&#22270;&#29255;</button>
+          <button class="btn-ghost" id="exportCsvBtn" type="button">&#23548;&#20986; CSV</button>
+          <button class="btn-ghost" id="exportExcelBtn" type="button">&#23548;&#20986; Excel</button>
+          <button class="btn-danger" id="clearAllBtn" type="button">&#28165;&#31354;&#20840;&#37096;</button>
         </div>
       </div>
 
-      <div class="muted">提示：点击“编辑”可修改；删除后不可恢复。数据保存在浏览器本地（localStorage）。</div>
+      <div class="muted">&#25552;&#31034;&#65306;&#28857;&#20987;&#8220;&#32534;&#36753;&#8221;&#21487;&#20462;&#25913;&#65307;&#21024;&#38500;&#21518;&#19981;&#21487;&#24674;&#22797;&#12290;&#25968;&#25454;&#20445;&#23384;&#22312;&#27983;&#35272;&#22120;&#26412;&#22320;&#65288;localStorage&#65289;&#12290;</div>
 
       <div id="tableWrap" class="table-wrap view-wrap">
         <table>
           <thead>
             <tr>
-              <th>星期</th>
-              <th>时间</th>
-              <th>图标</th>
-              <th>事项</th>
-              <th>类型</th>
-              <th>地点</th>
-              <th>备注</th>
-              <th>操作</th>
+              <th>&#26143;&#26399;</th>
+              <th>&#26102;&#38388;</th>
+              <th>&#22270;&#26631;</th>
+              <th>&#20107;&#39033;</th>
+              <th>&#31867;&#22411;</th>
+              <th>&#22320;&#28857;</th>
+              <th>&#22791;&#27880;</th>
+              <th>&#25805;&#20316;</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -417,21 +417,21 @@
         <div id="cardsGrid" class="cards-grid"></div>
       </div>
 
-      <div id="empty" class="empty">还没有安排，先在左侧添加第一条吧 ✨</div>
+      <div id="empty" class="empty">&#36824;&#27809;&#26377;&#23433;&#25490;&#65292;&#20808;&#22312;&#24038;&#20391;&#28155;&#21152;&#31532;&#19968;&#26465;&#21543; &#10024;</div>
     </main>
   </div>
 
   <script>
     const STORAGE_KEY = 'pretty_timetable_v1';
-    const dayOrder = ['周一','周二','周三','周四','周五','周六','周日'];
+    const dayOrder = ['&#21608;&#19968;','&#21608;&#20108;','&#21608;&#19977;','&#21608;&#22235;','&#21608;&#20116;','&#21608;&#20845;','&#21608;&#26085;'];
     const typeIcons = {
-      '课程': '📘',
-      '会议': '🧑‍💼',
-      '学习': '🧠',
-      '锻炼': '🏃',
-      '音乐': '🎵',
-      '舞蹈': '💃',
-      '其他': '🗂️'
+      '&#35838;&#31243;': '&#128216;',
+      '&#20250;&#35758;': '&#129489;&#8205;&#128188;',
+      '&#23398;&#20064;': '&#129504;',
+      '&#38203;&#28860;': '&#127939;',
+      '&#38899;&#20048;': '&#127925;',
+      '&#33310;&#36424;': '&#128131;',
+      '&#20854;&#20182;': '&#128450;&#65039;'
     };
 
     const $ = (id) => document.getElementById(id);
@@ -481,9 +481,9 @@
     function clearForm() {
       $('entryId').value = '';
       form.reset();
-      saveBtn.textContent = '新增';
-      $('day').value = '周一';
-      $('type').value = '课程';
+      saveBtn.textContent = '&#26032;&#22686;';
+      $('day').value = '&#21608;&#19968;';
+      $('type').value = '&#35838;&#31243;';
     }
 
     function fillForm(item) {
@@ -495,40 +495,40 @@
       $('end').value = item.end;
       $('location').value = item.location || '';
       $('note').value = item.note || '';
-      saveBtn.textContent = '保存修改';
+      saveBtn.textContent = '&#20445;&#23384;&#20462;&#25913;';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function render() {
       const filterDay = $('filterDay').value;
-      const view = sortList(list).filter(i => filterDay === '全部' || i.day === filterDay);
+      const view = sortList(list).filter(i => filterDay === '&#20840;&#37096;' || i.day === filterDay);
 
       tbody.innerHTML = '';
       cardsGrid.innerHTML = '';
       empty.style.display = view.length ? 'none' : 'block';
-      countChip.textContent = `共 ${view.length} 条`;
+      countChip.textContent = `&#20849; ${view.length} &#26465;`;
 
       for (const item of view) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${item.day}</td>
           <td><span class="pill">${item.start} - ${item.end}</span></td>
-          <td title="${escapeHtml(item.type)}" style="font-size:20px;line-height:1;">${typeIcons[item.type] || '📌'}</td>
+          <td title="${escapeHtml(item.type)}" style="font-size:20px;line-height:1;">${typeIcons[item.type] || '&#128204;'}</td>
           <td>${escapeHtml(item.title)}</td>
           <td>${escapeHtml(item.type)}</td>
           <td>${escapeHtml(item.location || '-')}</td>
           <td>${escapeHtml(item.note || '-')}</td>
           <td>
             <div class="actions">
-              <button class="btn-ghost" data-action="edit" data-id="${item.id}">编辑</button>
-              <button class="btn-danger" data-action="delete" data-id="${item.id}">删除</button>
+              <button class="btn-ghost" data-action="edit" data-id="${item.id}">&#32534;&#36753;</button>
+              <button class="btn-danger" data-action="delete" data-id="${item.id}">&#21024;&#38500;</button>
             </div>
           </td>
         `;
         tbody.appendChild(tr);
       }
 
-      const daysToShow = filterDay === '全部' ? dayOrder : [filterDay];
+      const daysToShow = filterDay === '&#20840;&#37096;' ? dayOrder : [filterDay];
       for (const day of daysToShow) {
         const dayItems = view.filter(x => x.day === day);
         const col = document.createElement('div');
@@ -537,21 +537,21 @@
         const listHtml = dayItems.length
           ? dayItems.map(item => `
             <div class="tt-card">
-              <div class="icon">${typeIcons[item.type] || '📌'}</div>
+              <div class="icon">${typeIcons[item.type] || '&#128204;'}</div>
               <div class="title">${escapeHtml(item.title)}</div>
               <div class="meta">${escapeHtml(item.start)} - ${escapeHtml(item.end)}</div>
-              <div class="meta">${escapeHtml(item.type)} · ${escapeHtml(item.location || '-')}</div>
+              <div class="meta">${escapeHtml(item.type)} &#183; ${escapeHtml(item.location || '-')}</div>
               <div class="meta">${escapeHtml(item.note || '-')}</div>
               <div class="card-actions">
-                <button class="btn-ghost" data-action="edit" data-id="${item.id}">编辑</button>
-                <button class="btn-danger" data-action="delete" data-id="${item.id}">删除</button>
+                <button class="btn-ghost" data-action="edit" data-id="${item.id}">&#32534;&#36753;</button>
+                <button class="btn-danger" data-action="delete" data-id="${item.id}">&#21024;&#38500;</button>
               </div>
             </div>
           `).join('')
-          : '<div class="muted">暂无课程</div>';
+          : '<div class="muted">&#26242;&#26080;&#35838;&#31243;</div>';
 
         col.innerHTML = `
-          <h3>${day}<span class="count">${dayItems.length} 条</span></h3>
+          <h3>${day}<span class="count">${dayItems.length} &#26465;</span></h3>
           <div class="day-list">${listHtml}</div>
         `;
         cardsGrid.appendChild(col);
@@ -583,11 +583,11 @@
       };
 
       if (!item.title || !item.start || !item.end) {
-        alert('请填写完整信息');
+        alert('&#35831;&#22635;&#20889;&#23436;&#25972;&#20449;&#24687;');
         return;
       }
       if (!timeValid(item.start, item.end)) {
-        alert('结束时间必须晚于开始时间');
+        alert('&#32467;&#26463;&#26102;&#38388;&#24517;&#39035;&#26202;&#20110;&#24320;&#22987;&#26102;&#38388;');
         return;
       }
 
@@ -632,10 +632,10 @@
 
     function exportCSV() {
       if (!list.length) {
-        alert('没有可导出的数据');
+        alert('&#27809;&#26377;&#21487;&#23548;&#20986;&#30340;&#25968;&#25454;');
         return;
       }
-      const header = ['星期', '时间', '事项', '类型', '地点', '备注'];
+      const header = ['&#26143;&#26399;', '&#26102;&#38388;', '&#20107;&#39033;', '&#31867;&#22411;', '&#22320;&#28857;', '&#22791;&#27880;'];
       const rows = formatExportRows();
       const csv = [header, ...rows]
         .map(cols => cols.map(v => `"${String(v).replaceAll('"', '""')}"`).join(','))
@@ -645,7 +645,7 @@
 
     function exportExcel() {
       if (!list.length) {
-        alert('没有可导出的数据');
+        alert('&#27809;&#26377;&#21487;&#23548;&#20986;&#30340;&#25968;&#25454;');
         return;
       }
       const rows = formatExportRows();
@@ -654,7 +654,7 @@
 <head><meta charset="UTF-8"></head>
 <body>
 <table border="1">
-  <tr><th>星期</th><th>时间</th><th>事项</th><th>类型</th><th>地点</th><th>备注</th></tr>
+  <tr><th>&#26143;&#26399;</th><th>&#26102;&#38388;</th><th>&#20107;&#39033;</th><th>&#31867;&#22411;</th><th>&#22320;&#28857;</th><th>&#22791;&#27880;</th></tr>
   ${rows.map(r => `<tr>${r.map(c => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}
 </table>
 </body>
@@ -664,8 +664,8 @@
 
     function buildExportCanvas() {
       const filterDay = $('filterDay').value;
-      const view = sortList(list).filter(i => filterDay === '全部' || i.day === filterDay);
-      const daysToShow = filterDay === '全部' ? dayOrder : [filterDay];
+      const view = sortList(list).filter(i => filterDay === '&#20840;&#37096;' || i.day === filterDay);
+      const daysToShow = filterDay === '&#20840;&#37096;' ? dayOrder : [filterDay];
 
       const pageGap = 14;
       const colW = 178;
@@ -704,12 +704,12 @@
 
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 28px Segoe UI, Microsoft YaHei, sans-serif';
-      ctx.fillText('📅 Time Table', 18, 38);
+      ctx.fillText('&#128197; Time Table', 18, 38);
       ctx.font = '500 14px Segoe UI, Microsoft YaHei, sans-serif';
       ctx.fillStyle = 'rgba(255,255,255,.88)';
-      ctx.fillText(filterDay === '全部' ? `全部安排 · 共 ${view.length} 条` : `${filterDay} · 共 ${view.length} 条`, 18, 62);
+      ctx.fillText(filterDay === '&#20840;&#37096;' ? `&#20840;&#37096;&#23433;&#25490; &#183; &#20849; ${view.length} &#26465;` : `${filterDay} &#183; &#20849; ${view.length} &#26465;`, 18, 62);
       ctx.fillStyle = 'rgba(255,255,255,.7)';
-      ctx.fillText(`导出时间：${new Date().toLocaleString()}`, 18, 82);
+      ctx.fillText(`&#23548;&#20986;&#26102;&#38388;&#65306;${new Date().toLocaleString()}`, 18, 82);
 
       daysToShow.forEach((day, dayIdx) => {
         const dayItems = view.filter(x => x.day === day);
@@ -727,12 +727,12 @@
         ctx.fillText(day, colX + 10, colY + 20);
         ctx.fillStyle = 'rgba(255,255,255,.72)';
         ctx.font = '500 11px Segoe UI, Microsoft YaHei, sans-serif';
-        ctx.fillText(`${dayItems.length} 条`, colX + colW - 36, colY + 20);
+        ctx.fillText(`${dayItems.length} &#26465;`, colX + colW - 36, colY + 20);
 
         if (!dayItems.length) {
           ctx.fillStyle = 'rgba(255,255,255,.55)';
           ctx.font = '500 12px Segoe UI, Microsoft YaHei, sans-serif';
-          ctx.fillText('暂无课程', colX + 10, colY + 50);
+          ctx.fillText('&#26242;&#26080;&#35838;&#31243;', colX + 10, colY + 50);
           return;
         }
 
@@ -749,7 +749,7 @@
 
           ctx.font = '34px Segoe UI Emoji, Segoe UI, sans-serif';
           ctx.fillStyle = '#fff';
-          ctx.fillText(typeIcons[item.type] || '📌', x + 8, y + 40);
+          ctx.fillText(typeIcons[item.type] || '&#128204;', x + 8, y + 40);
 
           ctx.fillStyle = '#fff';
           ctx.font = '700 15px Segoe UI, Microsoft YaHei, sans-serif';
@@ -758,9 +758,9 @@
           ctx.fillStyle = 'rgba(255,255,255,.9)';
           ctx.font = '500 12px Segoe UI, Microsoft YaHei, sans-serif';
           ctx.fillText(`${item.start} - ${item.end}`, x + 8, y + 88);
-          ctx.fillText(`${item.type} · ${(item.location || '-').slice(0, 12)}`, x + 8, y + 110);
+          ctx.fillText(`${item.type} &#183; ${(item.location || '-').slice(0, 12)}`, x + 8, y + 110);
           ctx.fillStyle = 'rgba(255,255,255,.72)';
-          ctx.fillText(`备注：${(item.note || '-').slice(0, 12)}`, x + 8, y + 132);
+          ctx.fillText(`&#22791;&#27880;&#65306;${(item.note || '-').slice(0, 12)}`, x + 8, y + 132);
         });
       });
 
@@ -769,7 +769,7 @@
 
     function exportImage() {
       if (!list.length) {
-        alert('没有可导出的数据');
+        alert('&#27809;&#26377;&#21487;&#23548;&#20986;&#30340;&#25968;&#25454;');
         return;
       }
       const canvas = buildExportCanvas();
@@ -781,40 +781,40 @@
 
     async function shareImage() {
       if (!list.length) {
-        alert('没有可分享的数据');
+        alert('&#27809;&#26377;&#21487;&#20998;&#20139;&#30340;&#25968;&#25454;');
         return;
       }
       if (!navigator.share) {
-        alert('当前浏览器不支持直接分享，请先点“导出图片”再发给微信好友。');
+        alert('&#24403;&#21069;&#27983;&#35272;&#22120;&#19981;&#25903;&#25345;&#30452;&#25509;&#20998;&#20139;&#65292;&#35831;&#20808;&#28857;&#8220;&#23548;&#20986;&#22270;&#29255;&#8221;&#20877;&#21457;&#32473;&#24494;&#20449;&#22909;&#21451;&#12290;');
         return;
       }
 
       const canvas = buildExportCanvas();
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       if (!blob) {
-        alert('生成图片失败，请重试');
+        alert('&#29983;&#25104;&#22270;&#29255;&#22833;&#36133;&#65292;&#35831;&#37325;&#35797;');
         return;
       }
 
       const file = new File([blob], 'timetable.png', { type: 'image/png' });
-      const shareData = { files: [file], title: '课程表', text: '我的课程表' };
+      const shareData = { files: [file], title: '&#35838;&#31243;&#34920;', text: '&#25105;&#30340;&#35838;&#31243;&#34920;' };
 
       try {
         if (navigator.canShare && !navigator.canShare({ files: [file] })) {
-          throw new Error('当前环境不支持文件分享');
+          throw new Error('&#24403;&#21069;&#29615;&#22659;&#19981;&#25903;&#25345;&#25991;&#20214;&#20998;&#20139;');
         }
         await navigator.share(shareData);
       } catch (err) {
         if (err?.name !== 'AbortError') {
-          alert('当前环境不能直接拉起微信分享，请用“导出图片”后在微信里发送。');
+          alert('&#24403;&#21069;&#29615;&#22659;&#19981;&#33021;&#30452;&#25509;&#25289;&#36215;&#24494;&#20449;&#20998;&#20139;&#65292;&#35831;&#29992;&#8220;&#23548;&#20986;&#22270;&#29255;&#8221;&#21518;&#22312;&#24494;&#20449;&#37324;&#21457;&#36865;&#12290;');
         }
       }
     }
 
     function copyFromPreviousDay() {
       const targetDay = $('filterDay').value;
-      if (targetDay === '全部') {
-        alert('请先在筛选里选择目标星期，再复制前一天课程');
+      if (targetDay === '&#20840;&#37096;') {
+        alert('&#35831;&#20808;&#22312;&#31579;&#36873;&#37324;&#36873;&#25321;&#30446;&#26631;&#26143;&#26399;&#65292;&#20877;&#22797;&#21046;&#21069;&#19968;&#22825;&#35838;&#31243;');
         return;
       }
 
@@ -824,7 +824,7 @@
 
       const sourceItems = sortList(list).filter(x => x.day === prevDay);
       if (!sourceItems.length) {
-        alert(`${prevDay} 没有可复制的课程`);
+        alert(`${prevDay} &#27809;&#26377;&#21487;&#22797;&#21046;&#30340;&#35838;&#31243;`);
         return;
       }
 
@@ -845,7 +845,7 @@
 
       persist();
       render();
-      alert(`已从 ${prevDay} 复制到 ${targetDay}：新增 ${added} 条`);
+      alert(`&#24050;&#20174; ${prevDay} &#22797;&#21046;&#21040; ${targetDay}&#65306;&#26032;&#22686; ${added} &#26465;`);
     }
 
     $('copyPrevDayBtn').addEventListener('click', copyFromPreviousDay);
@@ -859,7 +859,7 @@
       const isCard = mode === 'card';
       tableWrap.classList.toggle('hidden', isCard);
       cardsWrap.classList.toggle('hidden', !isCard);
-      toggleViewBtn.textContent = isCard ? '切换到表格模式' : '切换到卡片模式';
+      toggleViewBtn.textContent = isCard ? '&#20999;&#25442;&#21040;&#34920;&#26684;&#27169;&#24335;' : '&#20999;&#25442;&#21040;&#21345;&#29255;&#27169;&#24335;';
     }
 
     toggleViewBtn.addEventListener('click', () => {
@@ -880,7 +880,7 @@
       }
 
       if (action === 'delete') {
-        if (!confirm(`确定删除「${item.title}」吗？`)) return;
+        if (!confirm(`&#30830;&#23450;&#21024;&#38500;&#12300;${item.title}&#12301;&#21527;&#65311;`)) return;
         list = list.filter(x => x.id !== id);
         persist();
         render();
@@ -892,16 +892,16 @@
 
     $('clearAllBtn').addEventListener('click', () => {
       if (!list.length) return;
-      if (!confirm('确定清空全部安排吗？此操作不可恢复。')) return;
+      if (!confirm('&#30830;&#23450;&#28165;&#31354;&#20840;&#37096;&#23433;&#25490;&#21527;&#65311;&#27492;&#25805;&#20316;&#19981;&#21487;&#24674;&#22797;&#12290;')) return;
       list = [];
       persist();
       render();
       clearForm();
     });
 
-    // 初始默认值
-    $('day').value = '周一';
-    $('type').value = '课程';
+    // &#21021;&#22987;&#40664;&#35748;&#20540;
+    $('day').value = '&#21608;&#19968;';
+    $('type').value = '&#35838;&#31243;';
     setViewMode('table');
     render();
 
